@@ -150,8 +150,18 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Ignorar solo archivos de datasets grandes, pero no carpetas
-*.csv
-*.json
-*.xlsx
+# Ignorar solo archivos CSV, JSON y XLSX en la raíz, pero no en datasets/
+/*.csv
+/*.json
+/*.xlsx
+
+# Permitir archivos dentro de datasets/
 !datasets/
+!datasets/*.csv
+!datasets/*.json
+!datasets/*.xlsx
+
+# Permitir archivos dentro de datos/procesados/
+!datos/
+!datos/procesados/
+!datos/procesados/*.csv
