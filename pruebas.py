@@ -4,10 +4,10 @@ import joblib
 
 from scripts.test import test
 
-# model_path = os.path.join("modelos", f"DecisionTreeClassifier_0.9935", f"DecisionTreeClassifier_0.9935.pkl")
-# model_test = joblib.load(model_path)
-# print(model_test)
-# test.main(model_test)
+model_path = os.path.join("modelos", f"DecisionTreeClassifier_0.9989", f"DecisionTreeClassifier_0.9989.pkl")
+model_test = joblib.load(model_path)
+print(model_test)
+test.main(model_test)
 
 
 # import os

@@ -6,7 +6,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
-from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca
+from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest
 
 from scripts.entrenamiento import entrenamiento
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
@@ -71,12 +71,12 @@ def main():
                         normalizacion, 
                         discretizador, 
                         decodificador, 
-                        reduccion_dimensionalidad
+                        seleccionar_variables_randomForest
     )
     
     model = algorithms['DecisionTreeClassifier'](random_state=random_state)
     grid = True
-    grid_n_iter = 20
+    grid_n_iter = 10
     random_grid = False
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     

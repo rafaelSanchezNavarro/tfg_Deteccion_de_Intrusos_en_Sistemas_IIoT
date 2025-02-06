@@ -36,7 +36,7 @@ def cargar_datos():
 
     # Cargar componentes de preprocesamiento
     try:
-        path = os.path.join("modelos", "DecisionTreeClassifier_0.9935")
+        path = os.path.join("modelos", "DecisionTreeClassifier_0.9989")
         datos["imputador_cat"] = joblib.load(os.path.join(path, "imputador_cat.pkl"))
         datos["imputador_num"] = joblib.load(os.path.join(path, "imputador_num.pkl"))
         datos["normalizacion"] = joblib.load(os.path.join(path, "normalizacion.pkl"))
