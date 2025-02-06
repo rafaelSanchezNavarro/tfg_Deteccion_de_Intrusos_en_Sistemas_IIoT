@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from sklearn.metrics import accuracy_score
 import joblib
 import numpy as np
@@ -7,14 +8,14 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
+from scripts.entrenamiento.entrenamiento_utils.grid import param_grid
 from scripts.entrenamiento.entrenamiento_utils.create_pipeline import create_pipeline
 from scripts.entrenamiento.entrenamiento_utils.optimize import optimize
-from scripts.entrenamiento.entrenamiento_utils.diccionarios import algorithms, param_grid, n_iter, extern_kfold, intern_kfold, random_state
 
 
 def cargar_datos():
     """Carga todos los archivos procesados y los devuelve como DataFrames."""
-    carpeta = r"datos/procesados"
+    carpeta = r"datos/preprocesados"
     datos = {}
 
     # Cargar X_train
@@ -91,105 +92,66 @@ def cargar_datos():
 
     return datos
 
-def entrenar_modelo(X_train, X_val, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1):
-    # Identificar columnas categóricas, numéricas
-    categorical_cols_processed = X_train.select_dtypes(include=['object']).columns
-    numerical_cols_processed = X_train.select_dtypes(include=['float64', 'int64']).columns
+def entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3):
+    
+        # Identificar columnas categóricas, numéricas y booleanas
+        categorical_cols = X_train.select_dtypes(include=['object']).columns
+        boolean_cols = X_train.select_dtypes(include=['bool']).columns
+        if boolean_cols.any():  # Si hay columnas booleanas
+            X_train[boolean_cols] = X_train[boolean_cols].astype(int)
+        numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
 
-    # Configurar Repeated Stratified K-Fold
-    print("Configurando Repeated Stratified K-Fold...")
-    cv = RepeatedStratifiedKFold(n_splits=extern_kfold, n_repeats=intern_kfold, random_state=random_state)
-    print(f"Configuración de CV completa: {extern_kfold} pliegues, {intern_kfold} repeticiones, {n_iter} combinaciones de hiperparametros\n")
+        if grid:
+            X_train_sampled = X_train.sample(n=10000, random_state=random_state)
+            y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
+            
+            grid_search = optimize(
+                random_grid=random_grid,
+                random_state=random_state,
+                estimator=model,
+                X=X_train_sampled,
+                y=y_train_class3_sampled,
+                param_grid=param_grid[model.__class__.__name__],
+                n_iter=grid_n_iter,
+                cv=validacion_grid,
+                scoring='accuracy',
+                n_jobs=-1,
+            )
+            model = grid_search[0].best_estimator_
+            print(f"Optimización completa para {model.__class__.__name__}.")
 
-
-    X_train_sampled = X_train.sample(n=10000, random_state=random_state)
-    y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
-
-    # Eliminar las instancias muestreadas del conjunto original
-    X_train = X_train.drop(X_train_sampled.index)
-    y_train_class3 = y_train_class3.drop(X_train_sampled.index)
-
-    best_overall_score = -np.inf
-
-    # Optimización de hiperparámetros para cada algoritmo
-    for name in algorithms:
-        print(f"Iniciando optimización de hiperparámetros para: {name}")
-        model = algorithms[name]()
-        print(f"Modelo instanciado: {model}")
-
-        grid_search = optimize(
-            random_grid=True,
-            estimator=model,
-            X=X_train_sampled,
-            y=y_train_class3_sampled,
-            param_grid=param_grid[name],
-            n_iter=n_iter,
-            cv=cv,
-            scoring='accuracy',
-            n_jobs=-1,
+        print("Creando el pipeline del ensemble...")
+        pipeline = create_pipeline(
+            model=model,  # Modelo del algoritmo final (ensemble)
+            categorical_features=categorical_cols,  # Columnas categóricas
+            numerical_features=numerical_cols,  # Columnas numéricas
         )
-        print(f"Optimización completa para {name}.\n")
-
-        best_score = grid_search[0].best_score_
-
-        if best_score > best_overall_score:
-            best_model_name = name
-            model_with_best_params = grid_search[0].best_estimator_
-            best_params = grid_search[0].best_params_
-    print(f"Mejores parámetros para {best_model_name}: {best_params}\n")
+        print("Pipeline creado exitosamente.")
+        
+        # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
+        print("Entrenando el pipeline del ensemble...")
+        pipeline.fit(X_train, y_train_class3)
+        print("Entrenamiento completo.")
 
 
-    # Definir los modelos base para el ensemble (más rápidos)
-    print("Definiendo clasificadores base para el ensemble...")
-    clf1 = model_with_best_params
-    clf2 = GaussianNB()
-    clf3 = KNeighborsClassifier(n_neighbors=3)
-    print(f"Clasificadores definidos: clf1={clf1}, clf2={clf2}, clf3={clf3}\n")
-
-    # Definir el ensemble usando VotingClassifier
-    print("Configurando VotingClassifier para el ensemble...")
-    ensemble = VotingClassifier(
-        estimators=[
-            ('mwbp', clf1), # Mejor modelo de arbol
-            ('gnb', clf2),
-            ('knn', clf3),
-            # añadir mas diversidad de algoritmos que no esten basados en arboles
-        ],
-        voting='soft'  # Cambiar a 'hard' para votación mayoritaria
-    )
-    print(f"Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in ensemble.estimators]}\n")
+        # Realizar predicciones
+        print("Realizando predicciones en el conjunto de validación...")
+        y_pred_class3 = pipeline.predict(X_val)
+        print("Predicciones realizadas.")
 
 
-    # Crear el pipeline incluyendo preprocesamiento y el ensemble
-    print("Creando el pipeline del ensemble...")
-    ensemble_pipeline_class3 = create_pipeline(
-        model=ensemble,  # Modelo del algoritmo final (ensemble)
-        categorical_features=categorical_cols_processed,  # Columnas categóricas
-        numerical_features=numerical_cols_processed,  # Columnas numéricas
-        # feature_selection=rfe  # Añadir RFE al pipeline
-    )
-    print("Pipeline creado exitosamente.\n")
+        # Evaluar el rendimiento
+        accuracy = accuracy_score(y_val_class3, y_pred_class3)
+        print(f'Accuracy (validacion): {accuracy:.4f}')
+        
+        # Guardar el modelo
+        nombre_modelo = f"{model.__class__.__name__}_{accuracy:.4f}.pkl"
+        path = os.path.join("modelos", nombre_modelo)
+        joblib.dump(pipeline, path)
+        print("Pipeline guardado exitosamente.\n")
 
-
-    # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
-    print("Entrenando el pipeline del ensemble...")
-    ensemble_pipeline_class3.fit(X_train, y_train_class3)
-    print("Entrenamiento completo.\n")
-
-
-    # Realizar predicciones
-    print("Realizando predicciones en el conjunto de validación...")
-    y_pred_class3 = ensemble_pipeline_class3.predict(X_val)
-    print("Predicciones realizadas.\n")
-
-
-    # Evaluar el rendimiento
-    accuracy = accuracy_score(y_val_class3, y_pred_class3)
-    print(f'Accuracy del Ensemble (validacion): {accuracy:.4f}\n')
-
-
-def main():  
-    print("\n🚀 Iniciando entrenamiento...\n")
+def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):  
+    print("🚀 Iniciando entrenamiento...")
     
     # Cargar todos los archivos de datos procesados
     datos = cargar_datos()
@@ -200,14 +162,8 @@ def main():
 
     y_train_class3 = datos["y_train_class3"]
     y_val_class3 = datos["y_val_class3"]
-
-    y_train_class2 = datos["y_train_class2"]
-    y_val_class2 = datos["y_val_class2"]
-
-    y_train_class1 = datos["y_train_class1"]
-    y_val_class1 = datos["y_val_class1"]
     
     # Entrenar el modelo
-    entrenar_modelo(X_train, X_val, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1)
+    entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
 
     

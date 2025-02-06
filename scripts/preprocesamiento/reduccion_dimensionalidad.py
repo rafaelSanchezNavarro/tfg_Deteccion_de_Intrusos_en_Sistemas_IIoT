@@ -26,7 +26,7 @@ def correlacion_pares(df, umbral):
 
     # Selecciona las columnas a eliminar (de cada par, se elimina la que aparece como columna)
     alta_corr_pares = [col for col in upper_tri.columns if any(upper_tri[col] > umbral)]
-
+    
     return alta_corr_pares
 
 def correlacion_respecto_objetivo(df, target, umbral):
