@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import warnings
 from sklearn.metrics import accuracy_score
 import joblib
 import numpy as np
@@ -93,7 +94,7 @@ def cargar_datos():
     return datos
 
 def entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3):
-    
+        
         # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train.select_dtypes(include=['object']).columns
         boolean_cols = X_train.select_dtypes(include=['bool']).columns
@@ -144,11 +145,7 @@ def entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, ran
         accuracy = accuracy_score(y_val_class3, y_pred_class3)
         print(f'Accuracy (validacion): {accuracy:.4f}')
         
-        # Guardar el modelo
-        nombre_modelo = f"{model.__class__.__name__}_{accuracy:.4f}.pkl"
-        path = os.path.join("modelos", nombre_modelo)
-        joblib.dump(pipeline, path)
-        print("Pipeline guardado exitosamente.\n")
+        return pipeline, accuracy
 
 def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):  
     print("🚀 Iniciando entrenamiento...")
@@ -164,6 +161,7 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):
     y_val_class3 = datos["y_val_class3"]
     
     # Entrenar el modelo
-    entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
-
+    pipeline, accuracy = entrenar_modelo(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
+    pipeline = pipeline.named_steps['model']
+    return pipeline, accuracy
     

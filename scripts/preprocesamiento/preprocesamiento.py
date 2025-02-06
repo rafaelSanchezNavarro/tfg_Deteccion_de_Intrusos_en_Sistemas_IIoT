@@ -21,7 +21,7 @@ def cargar_datos():
         print("❌ Error: No se encontró el archivo.")
         return None
 
-def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1, output_dir):
+def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1, X_test, y_test_class3, output_dir):
     # Crear la carpeta si no existe
     os.makedirs(output_dir, exist_ok=True)
 
@@ -38,6 +38,9 @@ def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_clas
 
     y_train_class1.to_csv(os.path.join(output_dir, "y_train_class1.csv"), index=False)
     y_val_class1.to_csv(os.path.join(output_dir, "y_val_class1.csv"), index=False)
+    
+    X_test.to_csv(os.path.join(output_dir, "X_test_sin_pre.csv"), index=False)
+    y_test_class3.to_csv(os.path.join(output_dir, "y_test_class3_sin_pre.csv"), index=False)
     
 def dividir_datos(df, random_state):
     """Divide los datos en entrenamiento, validación y prueba."""
@@ -57,7 +60,7 @@ def dividir_datos(df, random_state):
     print(f"Variables objetivo eliminadas: {len(X.columns)}")
     return X_train, X_val, X_test, y_train_class3, y_val_class3, y_test_class3, y_train_class2, y_val_class2, y_test_class2, y_train_class1, y_val_class1, y_test_class1
 
-def preprocesar_datos(X_train, X_val, impuador_cat, imputador_num, normalizacion, discretizador, decodificador):
+def preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador):
     # Identificar columnas categóricas, numéricas y booleanas
     categorical_cols = X_train.select_dtypes(include=['object']).columns
     boolean_cols = X_train.select_dtypes(include=['bool']).columns
@@ -67,8 +70,8 @@ def preprocesar_datos(X_train, X_val, impuador_cat, imputador_num, normalizacion
     
     ##############################################################################
 
-    X_train[categorical_cols] = impuador_cat.fit_transform(X_train[categorical_cols])
-    X_val[categorical_cols] = impuador_cat.transform(X_val[categorical_cols])
+    X_train[categorical_cols] = imputador_cat.fit_transform(X_train[categorical_cols])
+    X_val[categorical_cols] = imputador_cat.transform(X_val[categorical_cols])
     
     X_train[numerical_cols] = imputador_num.fit_transform(X_train[numerical_cols])
     X_val[numerical_cols] = imputador_num.transform(X_val[numerical_cols])
@@ -190,10 +193,14 @@ def main(random_state, impuador_cat, imputador_num, normalizacion, discretizador
                   y_train_class2, 
                   y_val_class2, 
                   y_train_class1, 
-                  y_val_class1, 
+                  y_val_class1,
+                  X_test,
+                  y_test_class3, 
                   output_dir)
     
     print(f"📁 Archivos guardados en: {output_dir}")
+    
+    return X_train_processed.columns
 
 if __name__ == "__main__":
     main()   
