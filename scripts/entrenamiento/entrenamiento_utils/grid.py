@@ -13,7 +13,7 @@ param_grid = {
 
     'RandomForestClassifier': [
         {
-            'n_estimators': [100, 150, 200, 250, 300],  # Número de árboles en el bosque
+            'n_estimators': [25, 50, 75, 100, 125],  # Número de árboles en el bosque
             'criterion': ['gini', 'entropy'],  # Criterio para medir la calidad de la división
             'max_depth': [3, 5, 7, 10, None],  # Profundidad máxima del árbol
             'min_samples_split': [2, 5, 10, 15, 20],  # Mínimo número de muestras para dividir un nodo
@@ -39,7 +39,8 @@ param_grid = {
         {
             'n_estimators': [50, 100, 150],  # Número de clasificadores base
             'learning_rate': [0.01, 0.1, 1.0],  # Tasa de aprendizaje
-            'algorithm': ['SAMME', 'SAMME.R'],  # Algoritmo de actualización de pesos
+            'algorithm': ['SAMME'],  # Algoritmo de boosting
+            
         }
     ],
     'KNeighborsClassifier': [
@@ -61,4 +62,11 @@ param_grid = {
             'probability': [True, False],                                 # Habilitar probabilidades
         }
     ],
+    'GaussianNB': [
+        {
+            'priors': [None],
+            'var_smoothing': [1e-9, 1e-8, 1e-7, 1e-6],
+        }
+    ],
+    
 }
