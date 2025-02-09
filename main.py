@@ -101,8 +101,8 @@ def main():
     )
     
     model = algorithms['DecisionTreeClassifier']()
-    grid = False
-    grid_n_iter = 1
+    grid = True
+    grid_n_iter = 5
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     

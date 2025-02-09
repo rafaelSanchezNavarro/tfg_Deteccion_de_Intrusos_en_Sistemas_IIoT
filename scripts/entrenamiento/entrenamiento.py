@@ -129,11 +129,11 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         )
         print("Pipeline creado exitosamente.")
         
-        # # Validación cruzada de 5 pliegues
-        # print("Realizando validación cruzada de 5 pliegues...")
-        # cv_scores = cross_val_score(pipeline, X_train, y_train_class3, cv=5, scoring='accuracy')
-        # print("CV scores:", cv_scores)
-        # print("Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
+        # Validación cruzada de 5 pliegues
+        print("Realizando validación cruzada de 5 pliegues...")
+        cv_scores = cross_val_score(pipeline, X_train, y_train_class3, cv=5, scoring='accuracy')
+        print("CV scores:", cv_scores)
+        print("Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
         
         # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
         print("Entrenando el pipeline...")

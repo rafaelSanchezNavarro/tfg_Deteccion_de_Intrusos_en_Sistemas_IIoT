@@ -50,6 +50,20 @@ def cargar_datos(pre_path):
 
     return datos
 
+def guardar_conf(pre_path, accuracy, precision, recall, f1):
+    # Guardar resumen
+    resumen = crear_resumen(accuracy, precision, recall, f1)
+    path_resumen = os.path.join(f"modelos/{pre_path}", "resumen_test.txt")
+    with open(path_resumen, "w", encoding="utf-8") as f:
+        f.write(resumen)
+
+def crear_resumen(accuracy, precision, recall, f1_score):
+    texto = f"Accuracy: {accuracy:.4f}\n"
+    texto += f"Precision: {precision:.4f}\n"
+    texto += f"Recall: {recall:.4f}\n"
+    texto += f"F1 Score: {f1_score:.4f}\n\n"
+    return texto 
+
 def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas):
     
     # Identificar columnas categóricas, numéricas y booleanas
@@ -150,4 +164,4 @@ def main(model, path):
     f1 = f1_score(y_test_class3, y_pred_class3)
     print(f"F1 (Test): {f1:.4f}")
     
-    return accuracy, precision, recall, f1
+    guardar_conf(path, accuracy, precision, recall, f1)
