@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score, classification_report, f1_score, pre
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import cross_val_score
 from scripts.entrenamiento.entrenamiento_utils.grid import param_grid
 from scripts.entrenamiento.entrenamiento_utils.create_pipeline import create_pipeline
 from scripts.entrenamiento.entrenamiento_utils.optimize import optimize
@@ -16,7 +17,7 @@ def cargar_datos():
     datos = {}
 
     # Cargar X_train
-    path_X_train = os.path.join(carpeta, "X_train_processed.csv")
+    path_X_train = os.path.join(carpeta, "X_train.csv")
     try:
         datos["X_train"] = pd.read_csv(path_X_train, low_memory=False)
         print(f"✅ X_train cargado: {datos['X_train'].shape[0]} filas, {datos['X_train'].shape[1]} columnas.")
@@ -25,7 +26,7 @@ def cargar_datos():
         return None
 
     # Cargar X_val
-    path_X_val = os.path.join(carpeta, "X_val_processed.csv")
+    path_X_val = os.path.join(carpeta, "X_val.csv")
     try:
         datos["X_val"] = pd.read_csv(path_X_val, low_memory=False)
         print(f"✅ X_val cargado: {datos['X_val'].shape[0]} filas, {datos['X_val'].shape[1]} columnas.")
@@ -100,7 +101,7 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
 
         if grid:
             X_train_sampled = X_train.sample(n=10000, random_state=random_state)
-            y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index].values.ravel()
+            y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
             
             X_train = X_train.drop(index=X_train_sampled.index)
             y_train_class3 = y_train_class3.drop(index=X_train_sampled.index)
@@ -128,9 +129,15 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         )
         print("Pipeline creado exitosamente.")
         
+        # # Validación cruzada de 5 pliegues
+        # print("Realizando validación cruzada de 5 pliegues...")
+        # cv_scores = cross_val_score(pipeline, X_train, y_train_class3, cv=5, scoring='accuracy')
+        # print("CV scores:", cv_scores)
+        # print("Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
+        
         # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
         print("Entrenando el pipeline...")
-        pipeline.fit(X_train, y_train_class3.values.ravel())
+        pipeline.fit(X_train, y_train_class3)
         print("Entrenamiento completo.")
 
 
@@ -141,19 +148,19 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
 
 
         # Evaluar el rendimiento
-        accuracy = accuracy_score(y_val_class3.values.ravel(), y_pred_class3)
+        accuracy = accuracy_score(y_val_class3.values, y_pred_class3)
         print(f'Accuracy (validacion): {accuracy:.4f}')
         
-        precision = precision_score(y_val_class3.values.ravel(), y_pred_class3)
+        precision = precision_score(y_val_class3, y_pred_class3)
         print(f'Precision (validacion): {precision:.4f}')
         
-        recall = recall_score(y_val_class3.values.ravel(), y_pred_class3)
+        recall = recall_score(y_val_class3, y_pred_class3)
         print(f'Recall (validacion): {recall:.4f}')
         
-        f1 = f1_score(y_val_class3.values.ravel(), y_pred_class3)
+        f1 = f1_score(y_val_class3, y_pred_class3)
         print(f'F1 (validacion): {f1:.4f}')
         
-        return pipeline, accuracy
+        return pipeline, accuracy, precision, recall, f1
 
 def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2):
         indices_train = np.where(y_train_class3.values == 1)[0]
@@ -259,10 +266,10 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):
     y_val_class1 = datos["y_val_class1"]
     
     # Entrenar el modelo
-    pipeline, accuracy = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
+    pipeline, accuracy, precision, recall, f1 = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
     # clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
     # clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
     
     pipeline = pipeline.named_steps['model']
-    return pipeline, accuracy
+    return pipeline, accuracy, precision, recall, f1
     

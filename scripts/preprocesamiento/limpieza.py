@@ -15,8 +15,6 @@ def replace_common_values(df):
     return df
 
 def fix_mayus(df):
-    """Convierte todas las cadenas de texto a minúsculas y convierte 'true'/'false' a booleanos."""
     for col in df.select_dtypes(include=['object']).columns:
         df[col] = df[col].str.lower()
-        df[col] = df[col].replace({'true': True, 'false': False})
     return df

@@ -4,7 +4,7 @@ import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
-from scripts.preprocesamiento.conversion import convert_numeric_columns
+from scripts.preprocesamiento.conversion import fix_dytype
 
 
 import os
@@ -51,10 +51,6 @@ def cargar_datos(pre_path):
     return datos
 
 def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas):
-    X_test = convert_numeric_columns(X_test)
-    X_test = replace_common_values(X_test)
-    X_test = fix_mayus(X_test)
-
     
     # Identificar columnas categóricas, numéricas y booleanas
     categorical_cols = X_test.select_dtypes(include=['object']).columns
@@ -126,10 +122,15 @@ def main(model, path):
     decodificador = datos["decodificador"]
     caracteristicas = datos["caracteristicas"]
     
+    X_test = replace_common_values(X_test)
+    X_test = fix_mayus(X_test)
+    X_test = fix_dytype(X_test)
+    
+    y_test_class3 = y_test_class3.loc[X_test.index]
+    
     # Preprocesar los datos de test
     X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)
     print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
-    
     
     # Realizar predicciones
     y_pred_class3 = model.predict(X_test_processed)
@@ -149,4 +150,4 @@ def main(model, path):
     f1 = f1_score(y_test_class3, y_pred_class3)
     print(f"F1 (Test): {f1:.4f}")
     
-    # return accuracy, precision, recall, f1
+    return accuracy, precision, recall, f1

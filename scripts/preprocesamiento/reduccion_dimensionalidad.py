@@ -97,7 +97,7 @@ def seleccionar_variables_rfe(X_train, X_val, y_train, num_features=10):
     
     return X_train_filtrado, X_val_filtrado
 
-def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_train=10):
+def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_train):
     # Entrenar el modelo RandomForest con los pesos
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X_train, y_train, sample_weight=sample_weight_train)
@@ -110,7 +110,7 @@ def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_tr
 
     caracteristicas_imp_rf = feature_importances.head(150)
     caracteristicas_imp_rf = caracteristicas_imp_rf.Feature.to_list()
-    print(caracteristicas_imp_rf)
+    # print(caracteristicas_imp_rf)
 
     X_train_processed = X_train[caracteristicas_imp_rf]
     X_val_processed = X_val[caracteristicas_imp_rf]

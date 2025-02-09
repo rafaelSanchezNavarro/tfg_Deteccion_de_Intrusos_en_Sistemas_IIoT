@@ -1,15 +1,18 @@
 import pandas as pd
 import ipaddress
 
-def convert_numeric_columns(df, umbral_numerico=0.5):
-    """Convierte columnas de texto a numéricas si tienen más del umbral de valores numéricos."""
+def fix_dytype(df, umbral_numerico=0.7):
     object_cols = df.select_dtypes(include=['object']).columns
     int_cols = df.select_dtypes(include=['int64']).columns
 
     for col in object_cols:
         unique_values = set(df[col].unique())
-        if unique_values and len(unique_values) == 2 and unique_values.issubset({"true", "false", "TRUE", "FALSE"}):
-            df[col] = df[col].str.lower().map({'true': True, 'false': False})
+        if unique_values.issubset({'true', 'false'}):
+            df[col] = df[col].map({'true': True, 'false': False})
+        elif len(unique_values) == 3 and 'true' in unique_values:
+            print(f"Columna {col} convertida a booleana, se han borrado {df[col].isna().sum()} filas que contenían 'nan'.")
+            df.dropna(subset=[col], inplace=True)
+            df[col] = df[col].map({'true': True, 'false': False})
         else:
             converted = pd.to_numeric(df[col], errors='coerce')
             if converted.notna().mean() > umbral_numerico:
@@ -53,3 +56,7 @@ servicios_industriales = ["modbus", "mqtt", "coap"]
 def tipo_servicio(series):
     """Crea una columna indicando si el servicio es industrial."""
     return series.apply(lambda x: 1 if x in servicios_industriales else 0)
+
+def delete_ip_port(df):
+    """Elimina las columnas 'ip' y 'port'."""
+    return df.drop(columns=['Scr_IP', 'Scr_port', 'Des_IP', 'Des_port'])
