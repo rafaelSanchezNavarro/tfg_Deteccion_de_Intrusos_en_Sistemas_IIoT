@@ -11,7 +11,7 @@ import os
 import pandas as pd
 import joblib
 
-def cargar_datos():
+def cargar_datos(pre_path):
     """Carga todos los archivos procesados, el preprocesamiento y los devuelve como un diccionario."""
     carpeta = r"datos/preprocesados"
     datos = {}
@@ -36,7 +36,7 @@ def cargar_datos():
 
     # Cargar componentes de preprocesamiento
     try:
-        path = os.path.join("modelos", "AdaBoostClassifier_0.9548")
+        path = os.path.join("modelos", pre_path)
         datos["imputador_cat"] = joblib.load(os.path.join(path, "imputador_cat.pkl"))
         datos["imputador_num"] = joblib.load(os.path.join(path, "imputador_num.pkl"))
         datos["normalizacion"] = joblib.load(os.path.join(path, "normalizacion.pkl"))
@@ -110,11 +110,11 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     
     return X_test_processed 
     
-def main(model):  
+def main(model, path):  
     print("🚀 Iniciando test...")
     
     # Cargar todos los archivos de datos procesados
-    datos = cargar_datos()
+    datos = cargar_datos(path)
 
     # Asignar los DataFrames a variables individuales
     X_test = datos["X_test"]

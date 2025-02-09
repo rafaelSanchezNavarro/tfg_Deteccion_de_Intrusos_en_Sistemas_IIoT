@@ -6,6 +6,7 @@ from collections import Counter
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
+from sklearn.manifold import TSNE
 
 def matriz_correlacion(df):
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
@@ -117,3 +118,38 @@ def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_tr
     X_train_processed.shape
     
     return X_train_processed, X_val_processed
+
+def proyectar_tsne(X_train, X_val, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=42):
+    """
+    Aplica T-SNE para proyectar los datos a un espacio de menor dimensión.
+    
+    Parámetros:
+        - X_train: DataFrame de entrenamiento
+        - X_val: DataFrame de validación
+        - n_components: int, número de dimensiones del embedding
+        - perplexity: float, parámetro de T-SNE
+        - n_iter: int, número de iteraciones
+        - sample_size: int, cantidad de instancias a muestrear para T-SNE
+        - random_state: int, semilla para reproducibilidad
+
+    Retorna:
+        - X_train_tsne: DataFrame de entrenamiento con la proyección T-SNE
+        - X_val_tsne: DataFrame de validación con la proyección T-SNE
+    """
+    # Concatenar datos y muestrear si es necesario
+    X_all = pd.concat([X_train, X_val])
+    if X_all.shape[0] > sample_size:
+        X_all_sample = X_all.sample(n=sample_size, random_state=random_state)
+    else:
+        X_all_sample = X_all.copy()
+
+    # Aplicar T-SNE
+    tsne = TSNE(n_components=n_components, perplexity=perplexity, max_iter=max_iter, random_state=random_state)
+    X_all_tsne = tsne.fit_transform(X_all_sample)
+    df_tsne = pd.DataFrame(X_all_tsne, index=X_all_sample.index, columns=[f'tsne_{i+1}' for i in range(n_components)])
+    
+    # Separar proyección en conjuntos de entrenamiento y validación
+    X_train_tsne = df_tsne.loc[df_tsne.index.intersection(X_train.index)]
+    X_val_tsne = df_tsne.loc[df_tsne.index.intersection(X_val.index)]
+    
+    return X_train_tsne, X_val_tsne

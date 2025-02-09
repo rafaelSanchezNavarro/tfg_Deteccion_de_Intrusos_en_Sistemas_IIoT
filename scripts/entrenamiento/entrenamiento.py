@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 import warnings
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
 import joblib
 import numpy as np
 import pandas as pd
@@ -143,6 +143,15 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class3.values.ravel(), y_pred_class3)
         print(f'Accuracy (validacion): {accuracy:.4f}')
+        
+        precision = precision_score(y_val_class3.values.ravel(), y_pred_class3)
+        print(f'Precision (validacion): {precision:.4f}')
+        
+        recall = recall_score(y_val_class3.values.ravel(), y_pred_class3)
+        print(f'Recall (validacion): {recall:.4f}')
+        
+        f1 = f1_score(y_val_class3.values.ravel(), y_pred_class3)
+        print(f'F1 (validacion): {f1:.4f}')
         
         return pipeline, accuracy
 

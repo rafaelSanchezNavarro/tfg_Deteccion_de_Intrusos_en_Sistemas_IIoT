@@ -50,7 +50,7 @@ def dividir_datos(df, random_state):
     y_class1 = df['class1']
 
     X_train, X_temp, y_train_class3, y_temp_class3, y_train_class2, y_temp_class2, y_train_class1, y_temp_class1 = train_test_split(
-        X, y_class3, y_class2, y_class1, test_size=0.2, random_state=random_state, stratify=y_class3
+        X, y_class3, y_class2, y_class1, test_size=0.3, random_state=random_state, stratify=y_class3
     )
 
     X_val, X_test, y_val_class3, y_test_class3, y_val_class2, y_test_class2, y_val_class1, y_test_class1 = train_test_split(
@@ -143,9 +143,18 @@ def main(random_state, impuador_cat, imputador_num, normalizacion, discretizador
     X_train = replace_common_values(X_train)
     X_train = fix_mayus(X_train)
     
-    X_val = convert_numeric_columns(X_val)
-    X_val = replace_common_values(X_val)
+    y_train_class3 = y_train_class3.loc[X_train.index]
+    y_train_class2 = y_train_class2.loc[X_train.index]
+    y_train_class1 = y_train_class1.loc[X_train.index]
+    
     X_val = fix_mayus(X_val)
+    X_val = replace_common_values(X_val)
+    X_val = convert_numeric_columns(X_val)
+    
+    y_val_class3 = y_val_class3.loc[X_val.index]
+    y_val_class2 = y_val_class2.loc[X_val.index]
+    y_val_class1 = y_val_class1.loc[X_val.index]
+    
     
     X_train['Instancia_completa'] = X_train.notnull().all(axis=1).astype(int)
     X_val['Instancia_completa'] = X_val.notnull().all(axis=1).astype(int)

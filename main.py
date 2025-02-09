@@ -64,18 +64,18 @@ def main():
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
-    # caracteristicas = preprocesamiento.main(
-    #                     random_state,
-    #                     impuador_cat, 
-    #                     imputador_num, 
-    #                     normalizacion, 
-    #                     discretizador, 
-    #                     decodificador, 
-    #                     reduccion_dimensionalidad
-    # )
+    caracteristicas = preprocesamiento.main(
+                        random_state,
+                        impuador_cat, 
+                        imputador_num, 
+                        normalizacion, 
+                        discretizador, 
+                        decodificador, 
+                        reduccion_dimensionalidad
+    )
     
     model = algorithms['DecisionTreeClassifier']()
-    grid = True
+    grid = False
     grid_n_iter = 1
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
@@ -88,8 +88,8 @@ def main():
                         grid_n_iter,
                         random_grid
     )
-    guardar_conf(model_train, accuracy)
-    # guardar_conf(model_train, accuracy, impuador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)
+    # guardar_conf(model_train, accuracy)
+    guardar_conf(model_train, accuracy, impuador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)
     
 if __name__ == "__main__":
     main()
