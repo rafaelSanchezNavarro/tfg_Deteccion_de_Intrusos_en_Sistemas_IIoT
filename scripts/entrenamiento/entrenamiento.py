@@ -92,6 +92,9 @@ def cargar_datos():
 
 def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3):
         
+        y_train_class3 = y_train_class3.values.ravel()
+        y_val_class3 = y_val_class3.values.ravel()
+        
         # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train.select_dtypes(include=['object']).columns
         boolean_cols = X_train.select_dtypes(include=['bool']).columns
@@ -148,7 +151,7 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
 
 
         # Evaluar el rendimiento
-        accuracy = accuracy_score(y_val_class3.values, y_pred_class3)
+        accuracy = accuracy_score(y_val_class3, y_pred_class3)
         print(f'Accuracy (validacion): {accuracy:.4f}')
         
         precision = precision_score(y_val_class3, y_pred_class3)

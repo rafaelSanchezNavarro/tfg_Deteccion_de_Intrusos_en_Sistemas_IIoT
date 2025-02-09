@@ -86,7 +86,7 @@ def main():
     impuador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
-    discretizador = discretizers.discretizers['k_bins']
+    discretizador = None
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
@@ -100,8 +100,8 @@ def main():
                         reduccion_dimensionalidad
     )
     
-    model = algorithms['DecisionTreeClassifier']()
-    grid = True
+    model = algorithms['RandomForestClassifier']()
+    grid = False
     grid_n_iter = 5
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)

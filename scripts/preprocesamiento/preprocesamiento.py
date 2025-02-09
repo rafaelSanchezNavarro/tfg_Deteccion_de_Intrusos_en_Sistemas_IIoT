@@ -109,17 +109,22 @@ def preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacio
 
     ##############################################################################
     
-    X_train_discrete = discretizador.fit_transform(X_train[numerical_cols])
-    X_val_discrete = discretizador.transform(X_val[numerical_cols])
+    if discretizador is not None:
+        X_train_discrete = discretizador.fit_transform(X_train[numerical_cols])
+        X_val_discrete = discretizador.transform(X_val[numerical_cols])
 
-    # Convertir las matrices discretizadas a DataFrames
-    X_train_discretized_df = pd.DataFrame(X_train_discrete, columns=[f"{col}_discrete" for col in numerical_cols], index=X_train.index)
-    X_val_discretized_df = pd.DataFrame(X_val_discrete,  columns=[f"{col}_discrete" for col in numerical_cols], index=X_val.index)
+        # Convertir las matrices discretizadas a DataFrames
+        X_train_discretized_df = pd.DataFrame(X_train_discrete, columns=[f"{col}_discrete" for col in numerical_cols], index=X_train.index)
+        X_val_discretized_df = pd.DataFrame(X_val_discrete,  columns=[f"{col}_discrete" for col in numerical_cols], index=X_val.index)
     
     ##############################################################################
     
-    processed_numeric_train = pd.concat([X_train_scaled_df, X_train_discretized_df], axis=1)
-    processed_numeric_val = pd.concat([X_val_scaled_df, X_val_discretized_df], axis=1)
+    if discretizador is None:
+        processed_numeric_train = X_train_scaled_df
+        processed_numeric_val = X_val_scaled_df
+    else:
+        processed_numeric_train = pd.concat([X_train_scaled_df, X_train_discretized_df], axis=1)
+        processed_numeric_val = pd.concat([X_val_scaled_df, X_val_discretized_df], axis=1)
     
     ##############################################################################
     

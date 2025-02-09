@@ -40,7 +40,8 @@ def cargar_datos(pre_path):
         datos["imputador_cat"] = joblib.load(os.path.join(path, "imputador_cat.pkl"))
         datos["imputador_num"] = joblib.load(os.path.join(path, "imputador_num.pkl"))
         datos["normalizacion"] = joblib.load(os.path.join(path, "normalizacion.pkl"))
-        datos["discretizador"] = joblib.load(os.path.join(path, "discretizador.pkl"))
+        if os.path.exists(os.path.join(path, "discretizador.pkl")):
+            datos["discretizador"] = joblib.load(os.path.join(path, "discretizador.pkl"))
         datos["decodificador"] = joblib.load(os.path.join(path, "decodificador.pkl"))
         datos["caracteristicas"] = joblib.load(os.path.join(path, "caracteristicas.pkl"))
         print(f"✅ Preprocesamiento cargado: {path}")
@@ -88,14 +89,18 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
 
     ##############################################################################
     
-    X_test_discrete = discretizador.fit_transform(X_test[numerical_cols])
+    if discretizador is not None:
+        X_test_discrete = discretizador.fit_transform(X_test[numerical_cols])
 
-    # Convertir las matrices discretizadas a DataFrames
-    X_test_discretized_df = pd.DataFrame(X_test_discrete, columns=[f"{col}_discrete" for col in numerical_cols], index=X_test.index)
+        # Convertir las matrices discretizadas a DataFrames
+        X_test_discretized_df = pd.DataFrame(X_test_discrete, columns=[f"{col}_discrete" for col in numerical_cols], index=X_test.index)
     
     ##############################################################################
     
-    processed_numeric_test = pd.concat([X_test_scaled_df, X_test_discretized_df], axis=1)
+    if discretizador is not None:
+        processed_numeric_test = pd.concat([X_test_scaled_df, X_test_discretized_df], axis=1)
+    else:
+        processed_numeric_test = X_test_scaled_df
     
     ##############################################################################
     
@@ -132,7 +137,10 @@ def main(model, path):
     imputador_cat = datos["imputador_cat"]
     imputador_num = datos["imputador_num"]
     normalizacion = datos["normalizacion"]
-    discretizador = datos["discretizador"]
+    if "discretizador" in datos:
+        discretizador = datos["discretizador"]
+    else:
+        discretizador = None
     decodificador = datos["decodificador"]
     caracteristicas = datos["caracteristicas"]
     
