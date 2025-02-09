@@ -86,7 +86,7 @@ def main():
     impuador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
-    discretizador = None
+    discretizador = discretizers.discretizers['k_bins']
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
@@ -100,7 +100,7 @@ def main():
                         reduccion_dimensionalidad
     )
     
-    model = algorithms['RandomForestClassifier']()
+    model = algorithms['GradientBoostingClassifier'](random_state=random_state) # Poner semilla
     grid = False
     grid_n_iter = 5
     random_grid = True
