@@ -4,7 +4,7 @@ import joblib
 
 from scripts.test import test
 
-path = "AdaBoostClassifier_0.9336"
+path = "DecisionTreeClassifier_0.9953"
 model_path = os.path.join("modelos", path, f"{path}.pkl")
 model_test = joblib.load(model_path)
 print(model_test)

@@ -83,6 +83,11 @@ def dividir_datos(df, random_state):
     return X_train, X_val, X_test, y_train_class3, y_val_class3, y_test_class3, y_train_class2, y_val_class2, y_test_class2, y_train_class1, y_val_class1, y_test_class1
 
 def preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador):
+    
+    # print(X_train.info())   
+    # print(X_train['anomaly_alert'].unique())
+    # print(X_train['anomaly_alert'].dtype)
+    
     # Identificar columnas categóricas, numéricas y booleanas
     categorical_cols = X_train.select_dtypes(include=['object']).columns
     boolean_cols = X_train.select_dtypes(include=['bool']).columns
@@ -92,11 +97,53 @@ def preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacio
     
     ##############################################################################
 
+    # for col in categorical_cols:
+    #     print(f"Columna: {col}")
+    #     n_nulos = X_train[col].isnull().sum()
+    #     indices_nan = X_train[X_train[col].isna()].index
+    #     print(f"Índices con valores nulos: {indices_nan}")
+    #     if n_nulos:
+    #         print(f"Contiene {n_nulos} valores nulos.")
+    #     else:
+    #         print("No contiene valores nulos.")
+    #     print(X_train[col].value_counts(dropna=False))
+        
+    # for col in categorical_cols:
+    #     print(f"Columna: {col}")
+    #     n_nulos = X_train[col].isnull().sum()
+    #     indices_nan = X_train[X_train[col].isna()].index
+    #     print(f"Índices con valores nulos: {indices_nan}")
+    #     if n_nulos:
+    #         print(f"Contiene {n_nulos} valores nulos.")
+    #     else:
+    #         print("No contiene valores nulos.")
+    #     print(X_train[col].value_counts(dropna=False))
+
+    # list1 = [6218,   7552,  12240,  26079,  26601,  29465,  32164,  39379,  40878]
+    # print("Antes de imputar")
+    # for i in list1:
+    #     print(X_train.loc[i, 'anomaly_alert'])
+        
     X_train[categorical_cols] = imputador_cat.fit_transform(X_train[categorical_cols])
     X_val[categorical_cols] = imputador_cat.transform(X_val[categorical_cols])
+    # indice_protocol = list(categorical_cols).index('anomaly_alert')
+    # print("Valor de imputación para 'anomaly_alert':", imputador_cat.statistics_[indice_protocol])
+
+
+    
+    # print("Después de imputar")
+    # for i in list1:
+    #     print(X_train.loc[i, 'anomaly_alert'])
     
     X_train[numerical_cols] = imputador_num.fit_transform(X_train[numerical_cols])
     X_val[numerical_cols] = imputador_num.transform(X_val[numerical_cols])
+    
+    X_train = fix_dytype(X_train) # PREGUNTAR
+    X_val = fix_dytype(X_val) # PREGUNTAR
+    # print(X_train['anomaly_alert'].unique())
+    # print(X_train['anomaly_alert'].dtype)
+    # print(X_train['anomaly_alert'].value_counts())
+    # print(X_train.info())
 
     ##############################################################################
     
@@ -182,7 +229,6 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     y_val_class3 = y_val_class3.loc[X_val.index]
     y_val_class2 = y_val_class2.loc[X_val.index]
     y_val_class1 = y_val_class1.loc[X_val.index]
-    
     
     X_train['Instancia_completa'] = X_train.notnull().all(axis=1).astype(int)
     X_val['Instancia_completa'] = X_val.notnull().all(axis=1).astype(int)

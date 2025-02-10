@@ -10,8 +10,8 @@ def fix_dytype(df, umbral_numerico=0.7):
         if unique_values.issubset({'true', 'false'}):
             df[col] = df[col].map({'true': True, 'false': False})
         elif len(unique_values) == 3 and 'true' in unique_values:
-            print(f"Columna {col} convertida a booleana, se han borrado {df[col].isna().sum()} filas que contenían 'nan'.")
-            df.dropna(subset=[col], inplace=True)
+            # print(f"Columna {col} convertida a booleana, se han borrado {df[col].isna().sum()} filas que contenían 'nan'.")
+            # df.dropna(subset=[col], inplace=True) # PREGUNTAR Los imputare mas tarde
             df[col] = df[col].map({'true': True, 'false': False})
         else:
             converted = pd.to_numeric(df[col], errors='coerce')
@@ -23,6 +23,38 @@ def fix_dytype(df, umbral_numerico=0.7):
             df[col] = df[col].astype(bool)
     
     return df
+    
+    # for col in object_cols:
+    #   unique_values = set(df[col].unique())  # Valores únicos no nulos
+
+    #   # Comprobar si los valores únicos representan booleanos
+    #   boolean_like_values = {"true", "false", 'TRUE', 'FALSE'}
+    #   if unique_values and len(unique_values) == 2 and boolean_like_values.issubset(unique_values):
+    #         # Convertir a booleano: 'true' se convierte en True, 'false' en False
+    #         df[col] = df[col].str.lower().map({'true': True, 'false': False, 'TRUE': True, 'FALSE': False})
+    #         print(f"Columna {col} convertida a booleana.")
+    #   else:
+    #     # Intentar convertir otras columnas a numérico
+    #     converted = pd.to_numeric(df[col], errors='coerce')
+    #     # Verificar la proporción de valores numéricos válidos
+    #     proportion_numeric = converted.notna().mean()
+
+    #     if proportion_numeric > umbral_numerico:
+    #         # Si la mayoría de los valores son numéricos, mantener como float
+    #         df[col] = converted.astype(float)
+    #         print(f"Columna {col} convertida a numérica.")
+    #     else:
+    #         # Si no cumple el criterio, no hacemos nada: mantiene los valores originales como string
+    #         pass
+
+    # # Convertir columnas enteras con valores únicos {0, 1} a booleanas
+    # for col in int_cols:
+    #     unique_values = df[col].unique()
+    #     if set(unique_values).issubset({0, 1}):  # Verificar si los valores únicos son 0 y 1
+    #         df[col] = df[col].astype(bool)
+    #         print(f"2 Columna {col} convertida a booleana.")
+
+    # return df
 
 def clasificar_ip(ip):
     """Clasifica una IP como privada/pública y determina su clase."""

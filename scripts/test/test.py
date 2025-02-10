@@ -4,7 +4,7 @@ import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
-from scripts.preprocesamiento.conversion import fix_dytype
+from scripts.preprocesamiento.conversion import delete_ip_port, fix_dytype
 
 
 import os
@@ -79,6 +79,8 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     X_test[categorical_cols] = imputador_cat.fit_transform(X_test[categorical_cols])
     
     X_test[numerical_cols] = imputador_num.fit_transform(X_test[numerical_cols])
+    
+    X_test = fix_dytype(X_test) # PREGUNTAR
 
     ##############################################################################
     
@@ -147,6 +149,7 @@ def main(model, path):
     X_test = replace_common_values(X_test)
     X_test = fix_mayus(X_test)
     X_test = fix_dytype(X_test)
+    X_test = delete_ip_port(X_test)
     
     y_test_class3 = y_test_class3.loc[X_test.index]
     

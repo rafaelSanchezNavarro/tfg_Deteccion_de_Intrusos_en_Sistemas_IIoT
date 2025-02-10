@@ -91,7 +91,7 @@ def cargar_datos():
     return datos
 
 def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3):
-        
+
         y_train_class3 = y_train_class3.values.ravel()
         y_val_class3 = y_val_class3.values.ravel()
         
@@ -102,6 +102,9 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
             X_train[boolean_cols] = X_train[boolean_cols].astype(int)
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
 
+        print(categorical_cols)
+        print(numerical_cols)
+        
         if grid:
             X_train_sampled = X_train.sample(n=10000, random_state=random_state)
             y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]

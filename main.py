@@ -83,7 +83,7 @@ def crear_resumen(model_train, accuracy, precision, recall, f1_score, imputador_
 def main():
     random_state = 42
     
-    impuador_cat= imputers.imputers['categorical']['most_frequent']
+    imputador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
     discretizador = discretizers.discretizers['k_bins']
@@ -92,7 +92,7 @@ def main():
     
     caracteristicas = preprocesamiento.main(
                         random_state,
-                        impuador_cat, 
+                        imputador_cat, 
                         imputador_num, 
                         normalizacion, 
                         discretizador, 
@@ -100,7 +100,7 @@ def main():
                         reduccion_dimensionalidad
     )
     
-    model = algorithms['GradientBoostingClassifier'](random_state=random_state) # Poner semilla
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla
     grid = False
     grid_n_iter = 5
     random_grid = True
@@ -115,7 +115,7 @@ def main():
                         random_grid
     )
     # guardar_conf(model_train, accuracy)
-    guardar_conf(model_train, accuracy, precision, recall, f1, impuador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
+    guardar_conf(model_train, accuracy, precision, recall, f1, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
     
 if __name__ == "__main__":
     main()
