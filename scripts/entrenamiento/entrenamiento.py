@@ -90,7 +90,7 @@ def cargar_datos():
 
     return datos
 
-def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3):
+def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble):
 
         y_train_class3 = y_train_class3.values.ravel()
         y_val_class3 = y_val_class3.values.ravel()
@@ -102,6 +102,9 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
             X_train[boolean_cols] = X_train[boolean_cols].astype(float)
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
         
+        if ensemble and grid:
+            tree_model = model.estimators[0][1]
+        
         if grid:
             # X_train_sampled = X_train.sample(n=10000, random_state=random_state)
             # y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
@@ -109,21 +112,30 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
             # X_train = X_train.drop(index=X_train_sampled.index)
             # y_train_class3 = y_train_class3.drop(index=X_train_sampled.index)
             
+            if ensemble:
+                grid_model = tree_model
+            else:
+                grid_model = model
+                
             grid_search = optimize(
                 random_grid=random_grid,
                 random_state=random_state,
-                estimator=model,
+                estimator=grid_model,
                 X=X_train,
                 y=y_train_class3,
-                param_grid=param_grid[model.__class__.__name__],
+                param_grid=param_grid[grid_model.__class__.__name__],
                 n_iter=grid_n_iter,
                 cv=validacion_grid,
                 scoring='accuracy',
                 n_jobs=-1,
             )
-            model = grid_search[0].best_estimator_
-            print(f"➡️  Optimización completa para {model.__class__.__name__}.")
+            
+            grid_model = grid_search[0].best_estimator_
+            print(f"➡️  Optimización completa para {grid_model.__class__.__name__}.")
 
+            if ensemble:
+                model.estimators[0] = ('mwbp', grid_model)
+            
         print("➡️  Creando el pipeline...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
@@ -258,7 +270,7 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
         
         # print(classification_report(y_val_class1_filtered, y_pred_class1))
         
-def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):  
+def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble):  
     print("🚀 Iniciando entrenamiento...")
     
     # Cargar todos los archivos de datos procesados
@@ -278,7 +290,7 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):
     y_val_class1 = datos["y_val_class1"]
     
     # Entrenar el modelo
-    pipeline, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
+    pipeline, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
     clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
     clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
     

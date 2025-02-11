@@ -15,7 +15,7 @@ from scripts.test import test
 
 def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
-                 caracteristicas, grid, random_grid, validacion_grid):
+                 caracteristicas, grid, random_grid, validacion_grid, ensemble):
     
     # Crear la carpeta si no existe
     output_dir = f"modelos/{model.__class__.__name__}_{accuracy:.4f}"
@@ -52,22 +52,28 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
     joblib.dump(model, path)
     
     # Guardar resumen
-    resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
+    resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble)
     path_resumen = os.path.join(output_dir, "resumen_train.txt")
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
         
     print(f"📁 Pipeline guardado en: {output_dir}\n")
     
-def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid):
+def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble):
     cantidad = len(caracteristicas)
     texto = f"Fecha: {datetime.now()}\n\n"
-    texto += f"Modelo: {model_train.__class__.__name__}\n"
+    
+    if ensemble:
+        texto += f"Modelo: {model_train.estimators}\n"
+    else:
+        texto += f"Modelo: {model_train.__class__.__name__}\n"
+    
     texto += f"Accuracy: {accuracy:.4f}\n"
     texto += f"Precision: {precision:.4f}\n"
     texto += f"Recall: {recall:.4f}\n"
     texto += f"F1 Score: {f1_score:.4f}\n"
     texto += f"ROC AUC: {roc:.4f}\n\n"
+    
     if imputador_cat is not None:
         texto += f"Imputador Categórico: {imputador_cat.__class__.__name__} (Estrategia: {imputador_cat.strategy})\n"
     else:
@@ -108,9 +114,25 @@ def main():
                         reduccion_dimensionalidad
     )
     
-    model = algorithms['RandomForestClassifier'](random_state=random_state) # Poner semilla
+    
+    # clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
+    # clf2 = algorithms['GaussianNB']()
+    # model = VotingClassifier(
+    # estimators=[
+    #         ('mwbp', clf1), # Modelo baso en arboles
+    #         ('gnb', clf2),
+    #         # añadir mas diversidad de algoritmos que no esten basados en arboles
+    #     ],
+    #     voting='soft'  # Cambiar a 'hard' para votación mayoritaria
+    # )
+    ensemble = False
+    # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
+    
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla
+    
+    
     grid = False
-    grid_n_iter = 5
+    grid_n_iter = 10
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
@@ -120,10 +142,11 @@ def main():
                         grid,
                         validacion_grid,
                         grid_n_iter,
-                        random_grid
+                        random_grid,
+                        ensemble
     )
     # guardar_conf(model_train, accuracy)
-    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
+    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble)
     
 if __name__ == "__main__":
     main()
