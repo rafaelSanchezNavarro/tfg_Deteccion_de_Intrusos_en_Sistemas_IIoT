@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 import warnings
-from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score, roc_auc_score
 import joblib
 import numpy as np
 import pandas as pd
@@ -99,25 +99,22 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         categorical_cols = X_train.select_dtypes(include=['object']).columns
         boolean_cols = X_train.select_dtypes(include=['bool']).columns
         if boolean_cols.any():  # Si hay columnas booleanas
-            X_train[boolean_cols] = X_train[boolean_cols].astype(int)
+            X_train[boolean_cols] = X_train[boolean_cols].astype(float)
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
-
-        print(categorical_cols)
-        print(numerical_cols)
         
         if grid:
-            X_train_sampled = X_train.sample(n=10000, random_state=random_state)
-            y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
+            # X_train_sampled = X_train.sample(n=10000, random_state=random_state)
+            # y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
             
-            X_train = X_train.drop(index=X_train_sampled.index)
-            y_train_class3 = y_train_class3.drop(index=X_train_sampled.index)
+            # X_train = X_train.drop(index=X_train_sampled.index)
+            # y_train_class3 = y_train_class3.drop(index=X_train_sampled.index)
             
             grid_search = optimize(
                 random_grid=random_grid,
                 random_state=random_state,
                 estimator=model,
-                X=X_train_sampled,
-                y=y_train_class3_sampled,
+                X=X_train,
+                y=y_train_class3,
                 param_grid=param_grid[model.__class__.__name__],
                 n_iter=grid_n_iter,
                 cv=validacion_grid,
@@ -125,48 +122,51 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
                 n_jobs=-1,
             )
             model = grid_search[0].best_estimator_
-            print(f"Optimización completa para {model.__class__.__name__}.")
+            print(f"➡️  Optimización completa para {model.__class__.__name__}.")
 
-        print("Creando el pipeline...")
+        print("➡️  Creando el pipeline...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
             categorical_features=categorical_cols,  # Columnas categóricas
             numerical_features=numerical_cols,  # Columnas numéricas
         )
-        print("Pipeline creado exitosamente.")
+        print("➡️  Pipeline creado exitosamente.")
         
         # Validación cruzada de 5 pliegues
-        print("Realizando validación cruzada de 5 pliegues...")
+        print("➡️  Realizando validación cruzada de 5 pliegues...")
         cv_scores = cross_val_score(pipeline, X_train, y_train_class3, cv=5, scoring='accuracy')
-        print("CV scores:", cv_scores)
-        print("Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
+        print("📈 CV scores:", cv_scores)
+        print("📈 Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
         
         # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
-        print("Entrenando el pipeline...")
+        print("➡️  Entrenando el pipeline...")
         pipeline.fit(X_train, y_train_class3)
-        print("Entrenamiento completo.")
+        print("➡️  Entrenamiento completo.")
 
 
         # Realizar predicciones
-        print("Realizando predicciones en el conjunto de validación...")
+        print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class3 = pipeline.predict(X_val)
-        print("Predicciones realizadas.")
+        print("➡️  Predicciones realizadas.")
 
 
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class3, y_pred_class3)
-        print(f'Accuracy (validacion): {accuracy:.4f}')
+        print(f'📈 Accuracy (validacion): {accuracy:.4f}')
         
         precision = precision_score(y_val_class3, y_pred_class3)
-        print(f'Precision (validacion): {precision:.4f}')
+        print(f'📈 Precision (validacion): {precision:.4f}')
         
         recall = recall_score(y_val_class3, y_pred_class3)
-        print(f'Recall (validacion): {recall:.4f}')
+        print(f'📈 Recall (validacion): {recall:.4f}')
         
         f1 = f1_score(y_val_class3, y_pred_class3)
-        print(f'F1 (validacion): {f1:.4f}')
+        print(f'📈 F1 (validacion): {f1:.4f}')
         
-        return pipeline, accuracy, precision, recall, f1
+        roc = roc_auc_score(y_val_class3, y_pred_class3)
+        print(f'📈 ROC (validacion): {roc:.4f}')
+        
+        return pipeline, accuracy, precision, recall, f1, roc
 
 def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2):
         indices_train = np.where(y_train_class3.values == 1)[0]
@@ -177,6 +177,9 @@ def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_cla
         X_val_class2 = X_val.iloc[indices_val]
         y_val_class2_filtered = y_val_class2.iloc[indices_val]
         
+        y_train_class2_filtered = y_train_class2_filtered.values.ravel()
+        y_val_class2_filtered = y_val_class2_filtered.values.ravel()
+        
         # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train_class2.select_dtypes(include=['object']).columns
         boolean_cols = X_train_class2.select_dtypes(include=['bool']).columns
@@ -185,29 +188,29 @@ def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_cla
         numerical_cols = X_train_class2.select_dtypes(include=['float64', 'int64']).columns
         
         model = algorithms['DecisionTreeClassifier'](random_state=random_state)
-        print("Creando el pipeline multiclase categoria...")
+        print("➡️  Creando el pipeline multiclase categoria...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
             categorical_features=categorical_cols,  # Columnas categóricas
             numerical_features=numerical_cols,  # Columnas numéricas
         )
-        print("Pipeline multiclase categoria creado exitosamente.")
+        print("➡️  Pipeline multiclase categoria creado exitosamente.")
         
         # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
-        print("Entrenando el pipeline multiclase categoria...")
+        print("➡️  Entrenando el pipeline multiclase categoria...")
         pipeline.fit(X_train_class2, y_train_class2_filtered)
-        print("Entrenamiento completo.")
+        print("➡️  Entrenamiento completo.")
 
 
         # Realizar predicciones
-        print("Realizando predicciones en el conjunto de validación...")
+        print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class2 = pipeline.predict(X_val_class2)
-        print("Predicciones realizadas.")
+        print("➡️  Predicciones realizadas.")
 
 
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class2_filtered, y_pred_class2)
-        print(f'Accuracy (validacion): {accuracy:.4f}')
+        print(f'📈 Accuracy (validacion): {accuracy:.4f}')
 
 def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1):
         indices_train = np.where(y_train_class3.values == 1)[0]
@@ -218,6 +221,9 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
         X_val_class1 = X_val.iloc[indices_val]
         y_val_class1_filtered = y_val_class1.iloc[indices_val]
         
+        y_train_class1_filtered = y_train_class1_filtered.values.ravel()
+        y_val_class1_filtered = y_val_class1_filtered.values.ravel()
+        
         # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train_class1.select_dtypes(include=['object']).columns
         boolean_cols = X_train_class1.select_dtypes(include=['bool']).columns
@@ -226,31 +232,31 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
         numerical_cols = X_train_class1.select_dtypes(include=['float64', 'int64']).columns
         
         model = algorithms['DecisionTreeClassifier'](random_state=random_state)
-        print("Creando el pipeline multiclase tipo...")
+        print("➡️  Creando el pipeline multiclase tipo...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
             categorical_features=categorical_cols,  # Columnas categóricas
             numerical_features=numerical_cols,  # Columnas numéricas
         )
-        print("Pipeline multiclase tipo creado exitosamente.")
+        print("➡️  Pipeline multiclase tipo creado exitosamente.")
         
         # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
-        print("Entrenando el pipeline multiclase tipo...")
+        print("➡️  Entrenando el pipeline multiclase tipo...")
         pipeline.fit(X_train_class1, y_train_class1_filtered)
-        print("Entrenamiento completo.")
+        print("➡️  Entrenamiento completo.")
 
 
         # Realizar predicciones
-        print("Realizando predicciones en el conjunto de validación...")
+        print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class1 = pipeline.predict(X_val_class1)
-        print("Predicciones realizadas.")
+        print("➡️  Predicciones realizadas.")
 
 
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class1_filtered, y_pred_class1)
-        print(f'Accuracy (validacion): {accuracy:.4f}')
+        print(f'📈 Accuracy (validacion): {accuracy:.4f}')
         
-        print(classification_report(y_val_class1_filtered, y_pred_class1))
+        # print(classification_report(y_val_class1_filtered, y_pred_class1))
         
 def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):  
     print("🚀 Iniciando entrenamiento...")
@@ -272,10 +278,11 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid):
     y_val_class1 = datos["y_val_class1"]
     
     # Entrenar el modelo
-    pipeline, accuracy, precision, recall, f1 = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
-    # clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
-    # clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
+    pipeline, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3)
+    clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
+    clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
     
+    print("🎯 Entrenamiento finalizado")
     pipeline = pipeline.named_steps['model']
-    return pipeline, accuracy, precision, recall, f1
+    return pipeline, accuracy, precision, recall, f1, roc
     

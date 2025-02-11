@@ -1,60 +1,50 @@
 import pandas as pd
 import ipaddress
 
-def fix_dytype(df, umbral_numerico=0.7):
+def fix_dtype(df, umbral_numerico=0.7):
     object_cols = df.select_dtypes(include=['object']).columns
     int_cols = df.select_dtypes(include=['int64']).columns
+    bool_cols = df.select_dtypes(include=['bool']).columns
+
+    # Convertir booleanos a float
+    df[bool_cols] = df[bool_cols].astype(float)
 
     for col in object_cols:
-        unique_values = set(df[col].unique())
-        if unique_values.issubset({'true', 'false'}):
-            df[col] = df[col].map({'true': True, 'false': False})
-        elif len(unique_values) == 3 and 'true' in unique_values:
-            # print(f"Columna {col} convertida a booleana, se han borrado {df[col].isna().sum()} filas que contenían 'nan'.")
-            # df.dropna(subset=[col], inplace=True) # PREGUNTAR Los imputare mas tarde
-            df[col] = df[col].map({'true': True, 'false': False})
+        valores_unicos = df[col].dropna().unique()
+
+        if {"true", "false"} <= set(valores_unicos):  # Verifica si ambos existen
+            df[col] = df[col].map({'true': 1, 'false': 0}).astype(float)
         else:
             converted = pd.to_numeric(df[col], errors='coerce')
             if converted.notna().mean() > umbral_numerico:
                 df[col] = converted.astype(float)
-    
+
     for col in int_cols:
-        if set(df[col].unique()).issubset({0, 1}):
-            df[col] = df[col].astype(bool)
-    
+        df[col] = df[col].astype(float)
+
     return df
-    
+
+
+
     # for col in object_cols:
-    #   unique_values = set(df[col].unique())  # Valores únicos no nulos
-
-    #   # Comprobar si los valores únicos representan booleanos
-    #   boolean_like_values = {"true", "false", 'TRUE', 'FALSE'}
-    #   if unique_values and len(unique_values) == 2 and boolean_like_values.issubset(unique_values):
-    #         # Convertir a booleano: 'true' se convierte en True, 'false' en False
-    #         df[col] = df[col].str.lower().map({'true': True, 'false': False, 'TRUE': True, 'FALSE': False})
-    #         print(f"Columna {col} convertida a booleana.")
-    #   else:
-    #     # Intentar convertir otras columnas a numérico
-    #     converted = pd.to_numeric(df[col], errors='coerce')
-    #     # Verificar la proporción de valores numéricos válidos
-    #     proportion_numeric = converted.notna().mean()
-
-    #     if proportion_numeric > umbral_numerico:
-    #         # Si la mayoría de los valores son numéricos, mantener como float
-    #         df[col] = converted.astype(float)
-    #         print(f"Columna {col} convertida a numérica.")
+    #     unique_values = set(df[col].unique())
+    #     if unique_values.issubset({'true', 'false'}):
+    #         df[col] = df[col].map({'true': True, 'false': False})
+    #     elif len(unique_values) == 3 and 'true' in unique_values:
+    #         print(f"Columna {col} convertida a booleana, se han borrado {df[col].isna().sum()} filas que contenían 'nan'.")
+    #         df.dropna(subset=[col], inplace=True) # PREGUNTAR Los imputare mas tarde
+    #         df[col] = df[col].map({'true': True, 'false': False})
     #     else:
-    #         # Si no cumple el criterio, no hacemos nada: mantiene los valores originales como string
-    #         pass
-
-    # # Convertir columnas enteras con valores únicos {0, 1} a booleanas
+    #         converted = pd.to_numeric(df[col], errors='coerce')
+    #         if converted.notna().mean() > umbral_numerico:
+    #             df[col] = converted.astype(float)
+    
     # for col in int_cols:
-    #     unique_values = df[col].unique()
-    #     if set(unique_values).issubset({0, 1}):  # Verificar si los valores únicos son 0 y 1
+    #     if set(df[col].unique()).issubset({0, 1}):
     #         df[col] = df[col].astype(bool)
-    #         print(f"2 Columna {col} convertida a booleana.")
-
+    
     # return df
+ 
 
 def clasificar_ip(ip):
     """Clasifica una IP como privada/pública y determina su clase."""
@@ -91,4 +81,8 @@ def tipo_servicio(series):
 
 def delete_ip_port(df):
     """Elimina las columnas 'ip' y 'port'."""
-    return df.drop(columns=['Scr_IP', 'Scr_port', 'Des_IP', 'Des_port'])
+    lista = ['Scr_IP', 'Scr_port', 'Des_IP', 'Des_port', 'Scr_bytes', 'Des_bytes', 'Scr_pkts', 
+                            'Des_pkts', 'Scr_ip_bytes', 'Des_ip_bytes', 'Scr_packts_ratio', 'Des_pkts_ratio',
+                            'Scr_bytes_ratio', 'Des_bytes_ratio']
+
+    return df.drop(columns=lista)

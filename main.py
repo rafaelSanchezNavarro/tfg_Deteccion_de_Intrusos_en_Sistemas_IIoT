@@ -3,7 +3,6 @@ import os
 import joblib
 from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.naive_bayes import GaussianNB
 from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
 from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest
@@ -14,7 +13,7 @@ from modelos.diccionario_modelos import algorithms
 
 from scripts.test import test
 
-def guardar_conf(model, accuracy, precision, recall, f1, imputador_cat, imputador_num, 
+def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
                  caracteristicas, grid, random_grid, validacion_grid):
     
@@ -51,24 +50,33 @@ def guardar_conf(model, accuracy, precision, recall, f1, imputador_cat, imputado
     nombre_modelo = f"{model.__class__.__name__}_{accuracy:.4f}.pkl"
     path = os.path.join(output_dir, nombre_modelo)
     joblib.dump(model, path)
-    print("Pipeline guardado exitosamente.\n")
     
     # Guardar resumen
-    resumen = crear_resumen(model, accuracy, precision, recall, f1, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
+    resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
     path_resumen = os.path.join(output_dir, "resumen_train.txt")
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
+        
+    print(f"📁 Pipeline guardado en: {output_dir}\n")
     
-def crear_resumen(model_train, accuracy, precision, recall, f1_score, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid):
+def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid):
     cantidad = len(caracteristicas)
     texto = f"Fecha: {datetime.now()}\n\n"
     texto += f"Modelo: {model_train.__class__.__name__}\n"
     texto += f"Accuracy: {accuracy:.4f}\n"
     texto += f"Precision: {precision:.4f}\n"
     texto += f"Recall: {recall:.4f}\n"
-    texto += f"F1 Score: {f1_score:.4f}\n\n"
-    texto += "Imputador Categórico: " + (imputador_cat.__class__.__name__ if imputador_cat is not None else "Ninguno") + "\n"
-    texto += "Imputador Numérico: " + (imputador_num.__class__.__name__ if imputador_num is not None else "Ninguno") + "\n"
+    texto += f"F1 Score: {f1_score:.4f}\n"
+    texto += f"ROC AUC: {roc:.4f}\n\n"
+    if imputador_cat is not None:
+        texto += f"Imputador Categórico: {imputador_cat.__class__.__name__} (Estrategia: {imputador_cat.strategy})\n"
+    else:
+        texto += "Imputador Categórico: Ninguno\n"
+
+    if imputador_num is not None:
+        texto += f"Imputador Numérico: {imputador_num.__class__.__name__} (Estrategia: {imputador_num.strategy})\n"
+    else:
+        texto += "Imputador Numérico: Ninguno\n"
     texto += "Normalización: " + (normalizacion.__class__.__name__ if normalizacion is not None else "Ninguno") + "\n"
     texto += "Discretizador: " + (discretizador.__class__.__name__ if discretizador is not None else "Ninguno") + "\n"
     texto += "Decodificador: " + (decodificador.__class__.__name__ if decodificador is not None else "Ninguno") + "\n"
@@ -100,13 +108,13 @@ def main():
                         reduccion_dimensionalidad
     )
     
-    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla
+    model = algorithms['RandomForestClassifier'](random_state=random_state) # Poner semilla
     grid = False
     grid_n_iter = 5
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
-    model_train, accuracy, precision, recall, f1,  = entrenamiento.main(
+    model_train, accuracy, precision, recall, f1, roc  = entrenamiento.main(
                         random_state,
                         model,
                         grid,
@@ -115,7 +123,7 @@ def main():
                         random_grid
     )
     # guardar_conf(model_train, accuracy)
-    guardar_conf(model_train, accuracy, precision, recall, f1, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
+    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid)
     
 if __name__ == "__main__":
     main()

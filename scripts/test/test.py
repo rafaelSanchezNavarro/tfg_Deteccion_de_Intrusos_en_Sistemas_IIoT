@@ -1,10 +1,11 @@
 import os
 
 import joblib
+from matplotlib import pyplot as plt
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score, roc_auc_score, roc_curve
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
-from scripts.preprocesamiento.conversion import delete_ip_port, fix_dytype
+from scripts.preprocesamiento.conversion import delete_ip_port, fix_dtype
 
 
 import os
@@ -51,18 +52,20 @@ def cargar_datos(pre_path):
 
     return datos
 
-def guardar_conf(pre_path, accuracy, precision, recall, f1):
+def guardar_conf(pre_path, accuracy, precision, recall, f1, roc, clasr):
     # Guardar resumen
-    resumen = crear_resumen(accuracy, precision, recall, f1)
+    resumen = crear_resumen(accuracy, precision, recall, f1, roc, clasr)
     path_resumen = os.path.join(f"modelos/{pre_path}", "resumen_test.txt")
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
 
-def crear_resumen(accuracy, precision, recall, f1_score):
+def crear_resumen(accuracy, precision, recall, f1_score, roc, clasr):
     texto = f"Accuracy: {accuracy:.4f}\n"
     texto += f"Precision: {precision:.4f}\n"
     texto += f"Recall: {recall:.4f}\n"
-    texto += f"F1 Score: {f1_score:.4f}\n\n"
+    texto += f"F1 Score: {f1_score:.4f}\n"
+    texto += f"ROC AUC: {roc:.4f}\n\n"
+    texto += clasr
     return texto 
 
 def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas):
@@ -71,7 +74,7 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     categorical_cols = X_test.select_dtypes(include=['object']).columns
     boolean_cols = X_test.select_dtypes(include=['bool']).columns
     if boolean_cols.any():  # Si hay columnas booleanas
-        X_test[boolean_cols] = X_test[boolean_cols].astype(int)
+        X_test[boolean_cols] = X_test[boolean_cols].astype(float) # TAL VEZ INNCESESARIO
     numerical_cols = X_test.select_dtypes(include=['float64', 'int64']).columns
     
     ##############################################################################
@@ -80,8 +83,6 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     
     X_test[numerical_cols] = imputador_num.fit_transform(X_test[numerical_cols])
     
-    X_test = fix_dytype(X_test) # PREGUNTAR
-
     ##############################################################################
     
     X_test_scaled = normalizacion.fit_transform(X_test[numerical_cols])
@@ -126,7 +127,26 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     X_test_processed = X_test_processed[caracteristicas]
     
     return X_test_processed 
+   
+def graficar_roc(y_test_class3, y_pred_class3):
     
+    # Calcular las probabilidades de la clase positiva (por ejemplo, clase 1)
+    fpr, tpr, thresholds = roc_curve(y_test_class3, y_pred_class3)
+
+    # Calcular el área bajo la curva ROC
+    roc_auc = roc_auc_score(y_test_class3, y_pred_class3)
+
+    # Dibujar la curva ROC
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, color='blue', lw=2, label=f'ROC curve (AUC = {roc_auc:.4f})')
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')  # Línea diagonal
+    plt.title('Curva ROC')
+    plt.xlabel('Tasa de Falsos Positivos (FPR)')
+    plt.ylabel('Tasa de Verdaderos Positivos (TPR)')
+    plt.legend(loc='lower right')
+    plt.grid(True)
+    plt.show()
+ 
 def main(model, path):  
     print("🚀 Iniciando test...")
     
@@ -148,10 +168,12 @@ def main(model, path):
     
     X_test = replace_common_values(X_test)
     X_test = fix_mayus(X_test)
-    X_test = fix_dytype(X_test)
+    X_test = fix_dtype(X_test)
     X_test = delete_ip_port(X_test)
     
     y_test_class3 = y_test_class3.loc[X_test.index]
+    
+    # X_test['Protocol'].fillna("missing", inplace=True) 
     
     # Preprocesar los datos de test
     X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)
@@ -164,15 +186,24 @@ def main(model, path):
     probabilities = model.predict_proba(X_test_processed)
     
     accuracy = accuracy_score(y_test_class3, y_pred_class3)
-    print(f"Accuracy (Test): {accuracy:.4f}")
+    print(f"📈 Accuracy (Test): {accuracy:.4f}")
     
     precision = precision_score(y_test_class3, y_pred_class3)
-    print(f"Precision (Test): {precision:.4f}")
+    print(f"📈 Precision (Test): {precision:.4f}")
     
     recall = recall_score(y_test_class3, y_pred_class3)
-    print(f"Recall (Test): {recall:.4f}")
+    print(f"📈 Recall (Test): {recall:.4f}")
     
     f1 = f1_score(y_test_class3, y_pred_class3)
-    print(f"F1 (Test): {f1:.4f}")
+    print(f"📈 F1 (Test): {f1:.4f}")
     
-    guardar_conf(path, accuracy, precision, recall, f1)
+    roc = roc_auc_score(y_test_class3, y_pred_class3)
+    print(f'📈 ROC (validacion): {roc:.4f}')
+    
+    graficar_roc(y_test_class3, y_pred_class3)
+
+    clasr = classification_report(y_test_class3, y_pred_class3)
+    
+    guardar_conf(path, accuracy, precision, recall, f1, roc, clasr)
+    
+    print("🎯 Test finalizado.\n")

@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sklearn.model_selection import train_test_split
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
-from scripts.preprocesamiento.conversion import fix_dytype, tipo_servicio, clasificar_ip, delete_ip_port
+from scripts.preprocesamiento.conversion import fix_dtype, delete_ip_port
 from scripts.preprocesamiento.calculos import calculo_varianza
 from scripts.preprocesamiento.reduccion_dimensionalidad import correlacion_pares, correlacion_respecto_objetivo, seleccionar_variables_pca, seleccionar_variables_rfe, seleccionar_variables_randomForest, proyectar_tsne
 
@@ -79,71 +79,35 @@ def dividir_datos(df, random_state):
     y_val_class1 = y_val_class1.reset_index(drop=True)
     y_test_class1 = y_test_class1.reset_index(drop=True)  # Opcional
 
-    print(f"Variables objetivo eliminadas: {len(X.columns)}")
+    print(f"✅ Variables objetivo eliminadas: {len(X.columns)} columnas restantes.")
     return X_train, X_val, X_test, y_train_class3, y_val_class3, y_test_class3, y_train_class2, y_val_class2, y_test_class2, y_train_class1, y_val_class1, y_test_class1
 
 def preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador):
-    
-    # print(X_train.info())   
-    # print(X_train['anomaly_alert'].unique())
-    # print(X_train['anomaly_alert'].dtype)
-    
+        
     # Identificar columnas categóricas, numéricas y booleanas
     categorical_cols = X_train.select_dtypes(include=['object']).columns
     boolean_cols = X_train.select_dtypes(include=['bool']).columns
     if boolean_cols.any():  # Si hay columnas booleanas
-        X_train[boolean_cols] = X_train[boolean_cols].astype(int)
+        X_train[boolean_cols] = X_train[boolean_cols].astype(float)  # TAL VEZ INNCESESARIO
     numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
     
     ##############################################################################
-
-    # for col in categorical_cols:
-    #     print(f"Columna: {col}")
-    #     n_nulos = X_train[col].isnull().sum()
-    #     indices_nan = X_train[X_train[col].isna()].index
-    #     print(f"Índices con valores nulos: {indices_nan}")
-    #     if n_nulos:
-    #         print(f"Contiene {n_nulos} valores nulos.")
-    #     else:
-    #         print("No contiene valores nulos.")
-    #     print(X_train[col].value_counts(dropna=False))
-        
-    # for col in categorical_cols:
-    #     print(f"Columna: {col}")
-    #     n_nulos = X_train[col].isnull().sum()
-    #     indices_nan = X_train[X_train[col].isna()].index
-    #     print(f"Índices con valores nulos: {indices_nan}")
-    #     if n_nulos:
-    #         print(f"Contiene {n_nulos} valores nulos.")
-    #     else:
-    #         print("No contiene valores nulos.")
-    #     print(X_train[col].value_counts(dropna=False))
-
-    # list1 = [6218,   7552,  12240,  26079,  26601,  29465,  32164,  39379,  40878]
-    # print("Antes de imputar")
-    # for i in list1:
-    #     print(X_train.loc[i, 'anomaly_alert'])
         
     X_train[categorical_cols] = imputador_cat.fit_transform(X_train[categorical_cols])
     X_val[categorical_cols] = imputador_cat.transform(X_val[categorical_cols])
-    # indice_protocol = list(categorical_cols).index('anomaly_alert')
-    # print("Valor de imputación para 'anomaly_alert':", imputador_cat.statistics_[indice_protocol])
 
-
-    
-    # print("Después de imputar")
-    # for i in list1:
-    #     print(X_train.loc[i, 'anomaly_alert'])
-    
     X_train[numerical_cols] = imputador_num.fit_transform(X_train[numerical_cols])
     X_val[numerical_cols] = imputador_num.transform(X_val[numerical_cols])
     
-    X_train = fix_dytype(X_train) # PREGUNTAR
-    X_val = fix_dytype(X_val) # PREGUNTAR
-    # print(X_train['anomaly_alert'].unique())
-    # print(X_train['anomaly_alert'].dtype)
-    # print(X_train['anomaly_alert'].value_counts())
-    # print(X_train.info())
+    # indice_protocol = list(numerical_cols).index('anomaly_alert') # MIRAR CATEGORIA NAN
+    # print("Valor de imputación para 'anomaly_alert':", imputador_num.statistics_[indice_protocol])
+    # print(imputador_num.statistics_)  # Muestra los valores de imputación para todas las columnas numéricas
+    # print(imputador_num.strategy)  # Muestra la estrategia usada ('mean', 'median', 'most_frequent', etc.)
+    # print(X_train['anomaly_alert'].describe())  # Estadísticas básicas de la columna antes de la imputación
+    # print(X_train['anomaly_alert'].isnull().sum())  # Cantidad de valores nulos antes de la imputación
+    # print(X_train['anomaly_alert'].value_counts())  # Cantidad de valores únicos antes de la imputación
+    # mean_manual = X_train['anomaly_alert'].sum() / X_train['anomaly_alert'].count()
+    # print(mean_manual)  # Debería coincidir con 0.09763034990330267
 
     ##############################################################################
     
@@ -211,21 +175,21 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     ) = dividir_datos(df, random_state)
     
     print(f"📌 Datos divididos: Train {X_train.shape}, Val {X_val.shape}, Test {X_test.shape}")
-
+    
     X_train = replace_common_values(X_train)
     X_train = fix_mayus(X_train)
-    X_train = fix_dytype(X_train)
+    X_train = fix_dtype(X_train)
     X_train = delete_ip_port(X_train)
-    
+        
     y_train_class3 = y_train_class3.loc[X_train.index]
     y_train_class2 = y_train_class2.loc[X_train.index]
     y_train_class1 = y_train_class1.loc[X_train.index]
     
     X_val = replace_common_values(X_val)
     X_val = fix_mayus(X_val)
-    X_val = fix_dytype(X_val)
+    X_val = fix_dtype(X_val)
     X_val = delete_ip_port(X_val)
-    
+
     y_val_class3 = y_val_class3.loc[X_val.index]
     y_val_class2 = y_val_class2.loc[X_val.index]
     y_val_class1 = y_val_class1.loc[X_val.index]
@@ -235,7 +199,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     
     completas = X_train['Instancia_completa'].sum()
     incompletas = len(X_train) - completas
-    print(f"Instancias completas: {completas}, incompletas: {incompletas}")
+    print(f"✅ Instancias completas: {completas}, incompletas: {incompletas}")
     sample_weight_train = X_train['Instancia_completa'].replace({1: 3, 0: 1})
     
     columnas_no_comprobar = [col for col in df.columns if col not in ['Timestamp', 'Date'] and df[col].dtypes != 'object']
@@ -254,6 +218,8 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train = X_train.drop(columns=baja_corr_respecto_obj)
     X_val = X_val.drop(columns=baja_corr_respecto_obj)
     
+    # X_train['Protocol'].fillna("missing", inplace=True) 
+    
     X_train_processed, X_val_processed = preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     
     if reduccion_dimensionalidad == seleccionar_variables_pca:
@@ -266,7 +232,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=random_state)
     
     
-    print(f"Variables finales seleccionadas: {X_train_processed.shape[1]}")
+    print(f"✅ Variables finales seleccionadas: {X_train_processed.shape[1]}")
     print(f"🎯 Preprocesamiento finalizado: Train {X_train_processed.shape}, Val {X_val_processed.shape}")
     
     output_dir = "datos/preprocesados"
@@ -282,7 +248,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
                   y_test_class3, 
                   output_dir)
     
-    print(f"📁 Archivos guardados en: {output_dir}")
+    print(f"📁 Archivos guardados en: {output_dir}\n")
     
     return X_train_processed.columns
 
