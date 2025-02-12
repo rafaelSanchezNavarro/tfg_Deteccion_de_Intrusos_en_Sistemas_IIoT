@@ -135,7 +135,7 @@ def main():
     ensemble = False
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla
+    model = algorithms['DecisionTreeClassifier']() # Poner semilla a los que la necesiten
     
     
     grid = False
@@ -159,3 +159,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+    

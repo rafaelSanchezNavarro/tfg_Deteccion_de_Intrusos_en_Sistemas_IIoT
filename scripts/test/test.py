@@ -173,7 +173,7 @@ def main(model, path):
     
     y_test_class3 = y_test_class3.loc[X_test.index]
     
-    # X_test['Protocol'].fillna("missing", inplace=True) 
+    X_test['Protocol'] = X_test['Protocol'].fillna("missing")
     
     # Preprocesar los datos de test
     X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)

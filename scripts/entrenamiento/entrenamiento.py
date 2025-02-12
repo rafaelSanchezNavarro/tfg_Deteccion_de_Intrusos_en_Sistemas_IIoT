@@ -297,4 +297,3 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, e
     print("🎯 Entrenamiento finalizado")
     pipeline = pipeline.named_steps['model']
     return pipeline, accuracy, precision, recall, f1, roc
-    

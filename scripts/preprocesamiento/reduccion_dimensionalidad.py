@@ -59,7 +59,7 @@ def seleccionar_variables_pca(X_train, X_val, n_components=0.95, num_top_feature
     # X_train_sample = X_train.sample(n=300000, random_state=42) # Seleccionar una muestra de 300,000 instancias como en el articulo
     
     # Aplicar PCA (sin guardar la transformación)
-    pca = PCA(n_components=n_components)
+    pca = PCA(n_components=n_components, random_state=42)
     pca.fit(X_train)  # Solo ajustamos el modelo, no transformamos los datos
 
     # Obtener nombres originales de las variables

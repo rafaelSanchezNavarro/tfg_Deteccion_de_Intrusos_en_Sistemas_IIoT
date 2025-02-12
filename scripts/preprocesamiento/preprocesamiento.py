@@ -218,9 +218,9 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train = X_train.drop(columns=baja_corr_respecto_obj)
     X_val = X_val.drop(columns=baja_corr_respecto_obj)
     
-    # X_train['Protocol'].fillna("missing", inplace=True) 
-    # X_val['Protocol'].fillna("missing", inplace=True)
-    
+    X_train['Protocol'] = X_train['Protocol'].fillna("missing")
+    X_val['Protocol'] = X_val['Protocol'].fillna("missing")
+
     X_train_processed, X_val_processed = preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     
     if reduccion_dimensionalidad == seleccionar_variables_pca:
