@@ -15,7 +15,7 @@ from scripts.test import test
 
 def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
-                 caracteristicas, grid, random_grid, validacion_grid, ensemble):
+                 caracteristicas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
     
     # Crear la carpeta si no existe
     output_dir = f"modelos/{model.__class__.__name__}_{accuracy:.4f}"
@@ -52,14 +52,19 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
     joblib.dump(model, path)
     
     # Guardar resumen
-    resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble)
+    resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
+                            normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, 
+                            validacion_grid, ensemble, reduccion_dimensionalidad)
+    
     path_resumen = os.path.join(output_dir, "resumen_train.txt")
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
         
     print(f"📁 Pipeline guardado en: {output_dir}\n")
     
-def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble):
+def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, 
+                  discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
+    
     cantidad = len(caracteristicas)
     texto = f"Fecha: {datetime.now()}\n\n"
     
@@ -86,6 +91,8 @@ def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imput
     texto += "Normalización: " + (normalizacion.__class__.__name__ if normalizacion is not None else "Ninguno") + "\n"
     texto += "Discretizador: " + (discretizador.__class__.__name__ if discretizador is not None else "Ninguno") + "\n"
     texto += "Decodificador: " + (decodificador.__class__.__name__ if decodificador is not None else "Ninguno") + "\n"
+    if reduccion_dimensionalidad is not None:
+        texto += "Reducción de dimensionalidad: " + (reduccion_dimensionalidad.__name__) + "\n"
     texto += f"Características: {cantidad} " if caracteristicas is not None else "Ninguno" + "\n"
     texto += "\nGrid Search: " + ("Sí" if grid else "No") + "\n"
     if grid:
@@ -146,7 +153,9 @@ def main():
                         ensemble
     )
     # guardar_conf(model_train, accuracy)
-    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble)
+    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
+                 imputador_num, normalizacion, discretizador, decodificador, caracteristicas, 
+                 grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
     
 if __name__ == "__main__":
     main()

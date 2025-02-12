@@ -219,6 +219,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_val = X_val.drop(columns=baja_corr_respecto_obj)
     
     # X_train['Protocol'].fillna("missing", inplace=True) 
+    # X_val['Protocol'].fillna("missing", inplace=True)
     
     X_train_processed, X_val_processed = preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     

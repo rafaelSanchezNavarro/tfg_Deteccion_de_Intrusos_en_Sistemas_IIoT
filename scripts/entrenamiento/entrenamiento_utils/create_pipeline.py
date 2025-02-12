@@ -7,6 +7,7 @@ from sklearn.preprocessing import RobustScaler
 def create_pipeline(model=None,
                    imputer_categorical=None,
                    imputer_numeric=None,
+                   scaler=None,
                    discretizer=None,
                    encoders=None,
                    categorical_features=None,
@@ -36,9 +37,10 @@ def create_pipeline(model=None,
     numeric_pipeline_steps = []
     if imputer_numeric:
         numeric_pipeline_steps.append(('imputer', imputer_numeric))
+    if scaler:
+        numeric_pipeline_steps.append(('scaler', scaler))
     if discretizer:
         numeric_pipeline_steps.append(('discretizer', discretizer))
-    numeric_pipeline_steps.append(('scaler', RobustScaler()))
 
     numeric_pipeline = Pipeline(numeric_pipeline_steps) if numeric_pipeline_steps else 'passthrough'
 
