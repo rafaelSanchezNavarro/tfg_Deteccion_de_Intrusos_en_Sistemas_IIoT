@@ -7,6 +7,7 @@ from collections import Counter
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
 from sklearn.manifold import TSNE
+from sklearn.tree import DecisionTreeClassifier
 
 def matriz_correlacion(df):
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
@@ -84,10 +85,10 @@ def seleccionar_variables_pca(X_train, X_val, n_components, num_top_features):
 
 def seleccionar_variables_rfe(X_train, X_val, y_train, num_features):
     # Modelo base para RFE
-    modelo_rf = RandomForestClassifier(random_state=42)
+    modelo_rf = DecisionTreeClassifier(random_state=42)
 
     # Aplicar RFE para seleccionar las 20 mejores características
-    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=1)
+    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=10)
     X_train_rfe = rfe.fit_transform(X_train, y_train)
     X_val_rfe = rfe.transform(X_val)
 
@@ -96,7 +97,6 @@ def seleccionar_variables_rfe(X_train, X_val, y_train, num_features):
     
     X_train_filtrado = X_train[selected_features]
     X_val_filtrado = X_val[selected_features]
-    print("Características seleccionadas por RFE:", selected_features.tolist())
     
     return X_train_filtrado, X_val_filtrado
 
@@ -122,7 +122,7 @@ def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_tr
     
     return X_train_processed, X_val_processed
 
-def proyectar_tsne(X_train, X_val, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=42):
+def proyectar_tsne(X_train, X_val, n_components, perplexity, max_iter, sample_size, random_state):
     """
     Aplica T-SNE para proyectar los datos a un espacio de menor dimensión.
     

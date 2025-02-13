@@ -5,7 +5,7 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold
 from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
-from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest
+from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest, seleccionar_variables_rfe, proyectar_tsne
 
 from scripts.entrenamiento import entrenamiento
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
@@ -110,7 +110,7 @@ def main():
     normalizacion = scalers.scalers['robust']
     discretizador = discretizers.discretizers['k_bins']
     decodificador = encoders.encoders['one_hot']
-    reduccion_dimensionalidad = seleccionar_variables_pca
+    reduccion_dimensionalidad = seleccionar_variables_rfe
     
     caracteristicas = preprocesamiento.main(
                         random_state,
