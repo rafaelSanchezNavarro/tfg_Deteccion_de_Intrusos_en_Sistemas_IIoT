@@ -13,6 +13,7 @@ from modelos.diccionario_modelos import algorithms
 
 from scripts.test import test
 
+
 def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
                  caracteristicas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):

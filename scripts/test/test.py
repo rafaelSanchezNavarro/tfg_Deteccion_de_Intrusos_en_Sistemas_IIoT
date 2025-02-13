@@ -1,16 +1,10 @@
 import os
-
 import joblib
 from matplotlib import pyplot as plt
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score, roc_auc_score, roc_curve
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
 from scripts.preprocesamiento.conversion import delete_ip_port, fix_dtype
-
-
-import os
-import pandas as pd
-import joblib
 
 def cargar_datos(pre_path):
     """Carga todos los archivos procesados, el preprocesamiento y los devuelve como un diccionario."""

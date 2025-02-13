@@ -55,11 +55,11 @@ def dividir_datos(df, random_state):
     y_class1 = df['class1']
 
     X_train, X_temp, y_train_class3, y_temp_class3, y_train_class2, y_temp_class2, y_train_class1, y_temp_class1 = train_test_split(
-        X, y_class3, y_class2, y_class1, test_size=0.3, random_state=random_state, stratify=y_class3
+        X, y_class3, y_class2, y_class1, test_size=0.3, random_state=random_state, stratify=y_class3, shuffle=True
     )
 
     X_val, X_test, y_val_class3, y_test_class3, y_val_class2, y_test_class2, y_val_class1, y_test_class1 = train_test_split(
-        X_temp, y_temp_class3, y_temp_class2, y_temp_class1, test_size=0.5, random_state=random_state, stratify=y_temp_class3
+        X_temp, y_temp_class3, y_temp_class2, y_temp_class1, test_size=0.5, random_state=random_state, stratify=y_temp_class3, shuffle=True
     )
     
     # Resetear índices para evitar desalineaciones
@@ -224,9 +224,9 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train_processed, X_val_processed = preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     
     if reduccion_dimensionalidad == seleccionar_variables_pca:
-        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=0.95, num_top_features=10)
+        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=0.95, num_top_features=20)
     elif reduccion_dimensionalidad == seleccionar_variables_rfe:
-        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, num_features=10)
+        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, num_features=20)
     elif reduccion_dimensionalidad == seleccionar_variables_randomForest:
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, sample_weight_train)
     elif reduccion_dimensionalidad == proyectar_tsne:
