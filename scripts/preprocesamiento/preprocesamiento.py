@@ -232,7 +232,6 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     elif reduccion_dimensionalidad == proyectar_tsne:
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=random_state)
     
-    
     print(f"✅ Variables finales seleccionadas: {X_train_processed.shape[1]}")
     print(f"🎯 Preprocesamiento finalizado: Train {X_train_processed.shape}, Val {X_val_processed.shape}")
     

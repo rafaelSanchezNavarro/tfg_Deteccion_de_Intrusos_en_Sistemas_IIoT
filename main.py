@@ -108,9 +108,9 @@ def main():
     imputador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
-    discretizador = discretizers.discretizers['k_bins']
+    discretizador = None
     decodificador = encoders.encoders['one_hot']
-    reduccion_dimensionalidad = seleccionar_variables_rfe
+    reduccion_dimensionalidad = seleccionar_variables_pca
     
     caracteristicas = preprocesamiento.main(
                         random_state,
@@ -136,7 +136,7 @@ def main():
     ensemble = False
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
+    model = algorithms['RandomForestClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     
     
     grid = False
@@ -160,4 +160,6 @@ def main():
     
 if __name__ == "__main__":
     main()
+    
+    
     

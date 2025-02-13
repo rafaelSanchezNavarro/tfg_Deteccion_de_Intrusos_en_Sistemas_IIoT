@@ -13,4 +13,5 @@ algorithms = {
     "KNN": KNeighborsClassifier,  # KNN - K-vecinos más cercanos
     "SVC": SVC,  # SVM - Máquinas de vectores de soporte
     "LogisticRegression": LogisticRegression,  # LR - Regresión Logística
+    "RandomForestClassifier": RandomForestClassifier,  # RF - Bosques Aleatorios
 }
