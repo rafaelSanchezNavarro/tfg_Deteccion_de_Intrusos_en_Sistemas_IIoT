@@ -40,7 +40,7 @@ def correlacion_respecto_objetivo(df, target, umbral):
 
     return baja_corr_respecto_obj
 
-def seleccionar_variables_pca(X_train, X_val, n_components=0.95, num_top_features=10):
+def seleccionar_variables_pca(X_train, X_val, n_components, num_top_features):
     """
     Aplica PCA para seleccionar las características más influyentes, pero mantiene los datos originales.
     
@@ -82,12 +82,12 @@ def seleccionar_variables_pca(X_train, X_val, n_components=0.95, num_top_feature
     
     return X_train_filtrado, X_val_filtrado
 
-def seleccionar_variables_rfe(X_train, X_val, y_train, num_features=10):
+def seleccionar_variables_rfe(X_train, X_val, y_train, num_features):
     # Modelo base para RFE
-    modelo_rf = RandomForestClassifier(n_estimators=100, random_state=42)
+    modelo_rf = RandomForestClassifier(random_state=42)
 
     # Aplicar RFE para seleccionar las 20 mejores características
-    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=10)
+    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=1)
     X_train_rfe = rfe.fit_transform(X_train, y_train)
     X_val_rfe = rfe.transform(X_val)
 
