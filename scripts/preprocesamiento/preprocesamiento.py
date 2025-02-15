@@ -202,7 +202,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     print(f"✅ Instancias completas: {completas}, incompletas: {incompletas}")
     sample_weight_train = X_train['Instancia_completa'].replace({1: 3, 0: 1})
     
-    columnas_no_comprobar = [col for col in df.columns if col not in ['Timestamp', 'Date'] and df[col].dtypes != 'object']
+    columnas_no_comprobar = [col for col in X_train.columns if col not in ['Timestamp', 'Date', 'Instancia_completa'] and X_train[col].dtypes != 'object']
     variables_con_varianza_cero = calculo_varianza(X_train[columnas_no_comprobar])
     X_train = X_train.drop(columns=variables_con_varianza_cero)
     X_val = X_val.drop(columns=variables_con_varianza_cero)
@@ -250,7 +250,10 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     
     print(f"📁 Archivos guardados en: {output_dir}\n")
     
-    return X_train_processed.columns
+    caracteritisticas_seleccionadas = X_train.columns.tolist()
+    caracteritisticas_procesadas = X_train_processed.columns.tolist()
+    
+    return caracteritisticas_seleccionadas, caracteritisticas_procesadas
 
 if __name__ == "__main__":
     main()   

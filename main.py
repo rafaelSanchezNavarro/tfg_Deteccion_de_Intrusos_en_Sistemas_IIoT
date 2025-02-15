@@ -16,7 +16,7 @@ from scripts.test import test
 
 def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
-                 caracteristicas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
+                 caracteritisticas_seleccionadas, caracteritisticas_procesadas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
     
     # Crear la carpeta si no existe
     output_dir = f"modelos/{model.__class__.__name__}_{accuracy:.4f}"
@@ -43,9 +43,14 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
         path_decodificador = os.path.join(output_dir, "decodificador.pkl")
         joblib.dump(decodificador, path_decodificador)
 
-    if caracteristicas is not None:
-        path_reduccion = os.path.join(output_dir, "caracteristicas.pkl")
-        joblib.dump(caracteristicas, path_reduccion)
+    if caracteritisticas_seleccionadas is not None:
+        path_reduccion = os.path.join(output_dir, "caracteritisticas_seleccionadas.pkl")
+        joblib.dump(caracteritisticas_seleccionadas, path_reduccion)
+        
+    if caracteritisticas_procesadas is not None:
+        path_reduccion = os.path.join(output_dir, "caracteritisticas_procesadas.pkl")
+        joblib.dump(caracteritisticas_procesadas, path_reduccion)
+        
         
     # Guardar el modelo
     nombre_modelo = f"{model.__class__.__name__}_{accuracy:.4f}.pkl"
@@ -54,7 +59,7 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
     
     # Guardar resumen
     resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
-                            normalizacion, discretizador, decodificador, caracteristicas, grid, random_grid, 
+                            normalizacion, discretizador, decodificador, caracteritisticas_procesadas, grid, random_grid, 
                             validacion_grid, ensemble, reduccion_dimensionalidad)
     
     path_resumen = os.path.join(output_dir, "resumen_train.txt")
@@ -64,9 +69,9 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
     print(f"📁 Pipeline guardado en: {output_dir}\n")
     
 def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imputador_cat, imputador_num, normalizacion, 
-                  discretizador, decodificador, caracteristicas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
+                  discretizador, decodificador, caracteritisticas_procesadas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
     
-    cantidad = len(caracteristicas)
+    cantidad = len(caracteritisticas_procesadas)
     texto = f"Fecha: {datetime.now()}\n\n"
     
     if ensemble:
@@ -93,8 +98,8 @@ def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imput
     texto += "Discretizador: " + (discretizador.__class__.__name__ if discretizador is not None else "Ninguno") + "\n"
     texto += "Decodificador: " + (decodificador.__class__.__name__ if decodificador is not None else "Ninguno") + "\n"
     if reduccion_dimensionalidad is not None:
-        texto += "Reducción de dimensionalidad: " + (reduccion_dimensionalidad.__name__) + "\n"
-    texto += f"Características: {cantidad} " if caracteristicas is not None else "Ninguno" + "\n"
+        texto += "Reducción de dimensionalidad: " + (reduccion_dimensionalidad.__name__ if reduccion_dimensionalidad is not None else "Ninguno") + "\n"
+    texto += f"Características: {cantidad} \n"
     texto += "\nGrid Search: " + ("Sí" if grid else "No") + "\n"
     if grid:
         texto += "Random Grid Search: " + ("Sí" if random_grid else "No") + "\n"
@@ -112,7 +117,7 @@ def main():
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
-    caracteristicas = preprocesamiento.main(
+    caracteritisticas_seleccionadas, caracteritisticas_procesadas = preprocesamiento.main(
                         random_state,
                         imputador_cat, 
                         imputador_num, 
@@ -136,7 +141,7 @@ def main():
     ensemble = False
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['RandomForestClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     
     
     grid = False
@@ -155,7 +160,7 @@ def main():
     )
     # guardar_conf(model_train, accuracy)
     guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
-                 imputador_num, normalizacion, discretizador, decodificador, caracteristicas, 
+                 imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_seleccionadas, caracteritisticas_procesadas, 
                  grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
     
 if __name__ == "__main__":
