@@ -3,8 +3,10 @@ import joblib
 from matplotlib import pyplot as plt
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score, roc_auc_score, roc_curve
+from scripts.preprocesamiento.calculos import calculo_varianza
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
 from scripts.preprocesamiento.conversion import delete_ip_port, fix_dtype
+from scripts.preprocesamiento.reduccion_dimensionalidad import correlacion_pares, correlacion_respecto_objetivo
 
 def cargar_datos(pre_path):
     """Carga todos los archivos procesados, el preprocesamiento y los devuelve como un diccionario."""
@@ -38,7 +40,8 @@ def cargar_datos(pre_path):
         if os.path.exists(os.path.join(path, "discretizador.pkl")):
             datos["discretizador"] = joblib.load(os.path.join(path, "discretizador.pkl"))
         datos["decodificador"] = joblib.load(os.path.join(path, "decodificador.pkl"))
-        datos["caracteristicas"] = joblib.load(os.path.join(path, "caracteristicas.pkl"))
+        datos["caracteritisticas_seleccionadas"] = joblib.load(os.path.join(path, "caracteritisticas_seleccionadas.pkl"))
+        datos["caracteritisticas_procesadas"] = joblib.load(os.path.join(path, "caracteritisticas_procesadas.pkl"))
         print(f"✅ Preprocesamiento cargado: {path}")
     except FileNotFoundError:
         print("❌ Error: No se encontró el preprocesamiento.")
@@ -70,16 +73,16 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     if boolean_cols.any():  # Si hay columnas booleanas
         X_test[boolean_cols] = X_test[boolean_cols].astype(float) # TAL VEZ INNCESESARIO
     numerical_cols = X_test.select_dtypes(include=['float64', 'int64']).columns
-    
-    ##############################################################################
-
-    X_test[categorical_cols] = imputador_cat.fit_transform(X_test[categorical_cols])
-    
-    X_test[numerical_cols] = imputador_num.fit_transform(X_test[numerical_cols])
-    
+        
     ##############################################################################
     
-    X_test_scaled = normalizacion.fit_transform(X_test[numerical_cols])
+    X_test[categorical_cols] = imputador_cat.transform(X_test[categorical_cols])
+    
+    X_test[numerical_cols] = imputador_num.transform(X_test[numerical_cols])
+    
+    ##############################################################################
+    
+    X_test_scaled = normalizacion.transform(X_test[numerical_cols])
 
     # Convertir las matrices escaladas a DataFrames
     X_test_scaled_df = pd.DataFrame(X_test_scaled, columns=[f"{col}_scaled" for col in numerical_cols], index=X_test.index)
@@ -87,7 +90,7 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     ##############################################################################
     
     if discretizador is not None:
-        X_test_discrete = discretizador.fit_transform(X_test[numerical_cols])
+        X_test_discrete = discretizador.transform(X_test[numerical_cols])
 
         # Convertir las matrices discretizadas a DataFrames
         X_test_discretized_df = pd.DataFrame(X_test_discrete, columns=[f"{col}_discrete" for col in numerical_cols], index=X_test.index)
@@ -101,7 +104,7 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     
     ##############################################################################
     
-    X_test_encoded = decodificador.fit_transform(X_test[categorical_cols])
+    X_test_encoded = decodificador.transform(X_test[categorical_cols])
 
     # Obtener los nombres de las nuevas columnas codificadas
     encoded_cols = decodificador.get_feature_names_out(categorical_cols)
@@ -117,7 +120,6 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     # Opcional: Reordenar las columnas si es necesario
     X_test_processed = X_test_processed.reindex(sorted(X_test_processed.columns), axis=1)
     
-    caracteristicas = caracteristicas.tolist()
     X_test_processed = X_test_processed[caracteristicas]
     
     return X_test_processed 
@@ -158,7 +160,9 @@ def main(model, path):
     else:
         discretizador = None
     decodificador = datos["decodificador"]
-    caracteristicas = datos["caracteristicas"]
+    caracteritisticas_seleccionadas = datos["caracteritisticas_seleccionadas"]
+    caracteritisticas_procesadas = datos["caracteritisticas_procesadas"]
+    
     
     X_test = replace_common_values(X_test)
     X_test = fix_mayus(X_test)
@@ -166,11 +170,13 @@ def main(model, path):
     X_test = delete_ip_port(X_test)
     
     y_test_class3 = y_test_class3.loc[X_test.index]
-    
+        
+    X_test = X_test[caracteritisticas_seleccionadas] 
+        
     X_test['Protocol'] = X_test['Protocol'].fillna("missing")
     
     # Preprocesar los datos de test
-    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas)
+    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_procesadas)
     print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
     
     # Realizar predicciones
