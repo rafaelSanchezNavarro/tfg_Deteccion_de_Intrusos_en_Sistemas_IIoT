@@ -113,7 +113,7 @@ def main():
     imputador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
-    discretizador = None
+    discretizador = discretizers.discretizers['k_bins']
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     

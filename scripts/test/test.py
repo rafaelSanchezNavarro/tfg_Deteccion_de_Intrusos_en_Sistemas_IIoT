@@ -65,7 +65,7 @@ def crear_resumen(accuracy, precision, recall, f1_score, roc, clasr):
     texto += clasr
     return texto 
 
-def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteristicas):
+def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador):
     
     # Identificar columnas categóricas, numéricas y booleanas
     categorical_cols = X_test.select_dtypes(include=['object']).columns
@@ -119,8 +119,6 @@ def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, d
     
     # Opcional: Reordenar las columnas si es necesario
     X_test_processed = X_test_processed.reindex(sorted(X_test_processed.columns), axis=1)
-    
-    X_test_processed = X_test_processed[caracteristicas]
     
     return X_test_processed 
    
@@ -176,7 +174,8 @@ def main(model, path):
     X_test['Protocol'] = X_test['Protocol'].fillna("missing")
     
     # Preprocesar los datos de test
-    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_procesadas)
+    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
+    X_test_processed = X_test_processed[caracteritisticas_procesadas]
     print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
     
     # Realizar predicciones

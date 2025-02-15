@@ -218,6 +218,8 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train = X_train.drop(columns=baja_corr_respecto_obj)
     X_val = X_val.drop(columns=baja_corr_respecto_obj)
     
+    caracteritisticas_seleccionadas = X_train.columns.tolist()
+    
     X_train['Protocol'] = X_train['Protocol'].fillna("missing")
     X_val['Protocol'] = X_val['Protocol'].fillna("missing")
 
@@ -232,7 +234,9 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     elif reduccion_dimensionalidad == proyectar_tsne:
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=random_state)
     
-    print(f"✅ Variables finales seleccionadas: {X_train_processed.shape[1]}")
+    caracteritisticas_procesadas = X_train_processed.columns.tolist()
+    
+    print(f"✅ Variables finales seleccionadas: {len(caracteritisticas_procesadas)}")
     print(f"🎯 Preprocesamiento finalizado: Train {X_train_processed.shape}, Val {X_val_processed.shape}")
     
     output_dir = "datos/preprocesados"
@@ -249,9 +253,6 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
                   output_dir)
     
     print(f"📁 Archivos guardados en: {output_dir}\n")
-    
-    caracteritisticas_seleccionadas = X_train.columns.tolist()
-    caracteritisticas_procesadas = X_train_processed.columns.tolist()
     
     return caracteritisticas_seleccionadas, caracteritisticas_procesadas
 
