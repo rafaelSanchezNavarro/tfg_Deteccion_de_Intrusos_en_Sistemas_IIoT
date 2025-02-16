@@ -132,6 +132,8 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
 
             if ensemble:
                 model.estimators[0] = ('mwbp', grid_model)
+            else:
+                model = grid_model
             
         print("➡️  Creando el pipeline...")
         pipeline = create_pipeline(

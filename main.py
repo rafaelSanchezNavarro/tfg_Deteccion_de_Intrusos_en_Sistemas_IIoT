@@ -113,7 +113,7 @@ def main():
     imputador_cat= imputers.imputers['categorical']['most_frequent']
     imputador_num = imputers.imputers['numeric']['mean']
     normalizacion = scalers.scalers['robust']
-    discretizador = discretizers.discretizers['k_bins']
+    discretizador = None
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
@@ -127,24 +127,30 @@ def main():
                         reduccion_dimensionalidad
     )
     
+    ##################################################################################
+    
+    ensemble = False
     
     # clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
     # clf2 = algorithms['GaussianNB']()
     # model = VotingClassifier(
-    # estimators=[
-    #         ('mwbp', clf1), # Modelo baso en arboles
-    #         ('gnb', clf2),
-    #         # añadir mas diversidad de algoritmos que no esten basados en arboles
-    #     ],
-    #     voting='soft'  # Cambiar a 'hard' para votación mayoritaria
-    # )
-    ensemble = False
+    #     estimators=[
+    #             ('mwbp', clf1), # Modelo baso en arboles
+    #             ('gnb', clf2),
+    #             # añadir mas diversidad de algoritmos que no esten basados en arboles
+    #         ],
+    #         voting='soft'  # Cambiar a 'hard' para votación mayoritaria
+    #     )
+    
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
+    
+    ##################################################################################
     
     model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     
+    ##################################################################################
     
-    grid = False
+    grid = True
     grid_n_iter = 10
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
