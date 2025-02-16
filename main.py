@@ -7,7 +7,7 @@ from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
 from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest, seleccionar_variables_rfe, proyectar_tsne
 
-from scripts.entrenamiento import entrenamiento
+from scripts.entrenamiento import entrenamientoNoSupervisado, entrenamientoSupervisado
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
 from modelos.diccionario_modelos import algorithms
 
@@ -110,24 +110,27 @@ def crear_resumen(model_train, accuracy, precision, recall, f1_score, roc, imput
 def main():
     random_state = 42
     
-    imputador_cat= imputers.imputers['categorical']['most_frequent']
-    imputador_num = imputers.imputers['numeric']['mean']
-    normalizacion = scalers.scalers['robust']
-    discretizador = None
-    decodificador = encoders.encoders['one_hot']
-    reduccion_dimensionalidad = seleccionar_variables_pca
+    # Preprocesamiento ####################################################################
     
-    caracteritisticas_seleccionadas, caracteritisticas_procesadas = preprocesamiento.main(
-                        random_state,
-                        imputador_cat, 
-                        imputador_num, 
-                        normalizacion, 
-                        discretizador, 
-                        decodificador, 
-                        reduccion_dimensionalidad
-    )
+    # imputador_cat= imputers.imputers['categorical']['most_frequent']
+    # imputador_num = imputers.imputers['numeric']['mean']
+    # normalizacion = scalers.scalers['robust']
+    # discretizador = None
+    # decodificador = encoders.encoders['one_hot']
+    # reduccion_dimensionalidad = seleccionar_variables_pca
     
-    ##################################################################################
+    # caracteritisticas_seleccionadas, caracteritisticas_procesadas = preprocesamiento.main(
+    #                     random_state,
+    #                     imputador_cat, 
+    #                     imputador_num, 
+    #                     normalizacion, 
+    #                     discretizador, 
+    #                     decodificador, 
+    #                     reduccion_dimensionalidad
+    # )
+    
+    
+    # Eleccion del modelo ###################################################################
     
     ensemble = False
     
@@ -144,30 +147,35 @@ def main():
     
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    ##################################################################################
-    
     model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     
-    ##################################################################################
     
-    grid = True
-    grid_n_iter = 10
-    random_grid = True
-    validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
+    # Entrenamiento #########################################################################
     
-    model_train, accuracy, precision, recall, f1, roc  = entrenamiento.main(
-                        random_state,
-                        model,
-                        grid,
-                        validacion_grid,
-                        grid_n_iter,
-                        random_grid,
-                        ensemble
-    )
-    # guardar_conf(model_train, accuracy)
-    guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
-                 imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_seleccionadas, caracteritisticas_procesadas, 
-                 grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
+    # grid = True
+    # grid_n_iter = 10
+    # random_grid = True
+    # validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
+    
+    # model_train, accuracy, precision, recall, f1, roc  = entrenamientoSupervisado.main(
+    #                     random_state,
+    #                     model,
+    #                     grid,
+    #                     validacion_grid,
+    #                     grid_n_iter,
+    #                     random_grid,
+    #                     ensemble
+    # )
+    
+    entrenamientoNoSupervisado.main(random_state=random_state)
+    
+    # Guardar modelo #######################################################################
+    
+    # # guardar_conf(model_train, accuracy)
+    # guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
+    #              imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_seleccionadas, caracteritisticas_procesadas, 
+    #              grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
+    
     
 if __name__ == "__main__":
     main()
