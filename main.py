@@ -7,7 +7,7 @@ from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
 from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest, seleccionar_variables_rfe, proyectar_tsne
 
-from scripts.entrenamiento import entrenamiento, entrenamientoNoSupervisado
+from scripts.entrenamiento import entrenamientoNoSupervisado, entrenamientoSupervisado
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
 from modelos.diccionario_modelos import algorithms
 
@@ -157,7 +157,7 @@ def main():
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
-    model_train, accuracy, precision, recall, f1, roc  = entrenamiento.main(
+    model_train, accuracy, precision, recall, f1, roc  = entrenamientoSupervisado.main(
                         random_state,
                         model,
                         grid,
@@ -173,6 +173,8 @@ def main():
     guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
                  imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_seleccionadas, caracteritisticas_procesadas, 
                  grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
+    
+    # entrenamientoNoSupervisado.main(random_state=random_state)
     
     
 if __name__ == "__main__":

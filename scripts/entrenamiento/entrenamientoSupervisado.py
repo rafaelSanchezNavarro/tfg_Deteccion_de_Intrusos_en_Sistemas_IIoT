@@ -137,7 +137,7 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
             
         print("➡️  Creando el pipeline...")
         pipeline = create_pipeline(
-            model=model,  # Modelo del algoritmo final (ensemble)
+            model=model,  
             categorical_features=categorical_cols,  # Columnas categóricas
             numerical_features=numerical_cols,  # Columnas numéricas
         )
@@ -149,19 +149,14 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         print("📈 CV scores:", cv_scores)
         print("📈 Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
         
-        # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
         print("➡️  Entrenando el pipeline...")
         pipeline.fit(X_train, y_train_class3)
         print("➡️  Entrenamiento completo.")
 
-
-        # Realizar predicciones
         print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class3 = pipeline.predict(X_val)
         print("➡️  Predicciones realizadas.")
 
-
-        # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class3, y_pred_class3)
         print(f'📈 Accuracy (validacion): {accuracy:.4f}')
         
@@ -272,10 +267,9 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
 def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble):  
     print("🚀 Iniciando entrenamiento...")
     
-    # Cargar todos los archivos de datos procesados
+    # Cargar todos los archivos de datos preprocesados
     datos = cargar_datos()
 
-    # Asignar los DataFrames a variables individuales
     X_train = datos["X_train"]
     X_val = datos["X_val"]
 
