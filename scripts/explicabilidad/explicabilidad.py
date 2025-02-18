@@ -49,7 +49,7 @@ def guardar_exp(pre_path, exp, tipo):
             f.write(exp.getbuffer())  # 📌 Guardar la imagen de SHAP
         print(f"✅ Gráfico SHAP guardado en: {path_shap}")
 
-def metodo_lime(model_test, X_train, X_val):
+def metodo_lime(model_test, X_train, X_val, instancia):
     # Crear el explicador
     explainer = LimeTabularExplainer(X_train.values, 
                                     feature_names=X_train.columns.tolist(), 
@@ -58,48 +58,87 @@ def metodo_lime(model_test, X_train, X_val):
                                     random_state=42)
 
     # Seleccionar una muestra de prueba
-    idx = 3 
     exp = explainer.explain_instance(
-        X_val.iloc[idx].values, 
+        X_val.iloc[instancia].values, 
         lambda x: model_test.predict_proba(pd.DataFrame(x, columns=X_train.columns))
     )
     
     return exp
 
-def metodo_shape(model_test, X_val, path):
+def metodo_shape(model_test, X_val, instancia):
     
-    # Crear el explicador específico para árboles de decisión
-    explainer = shap.TreeExplainer(model_test)
-    shap_values = explainer.shap_values(X_val)
+    if instancia is not None:
+        # Crear el explicador específico para árboles de decisión
+        explainer = shap.TreeExplainer(model_test)
+        shap_values = explainer.shap_values(X_val)
 
-    # Verificar estructura de shap_values
-    # print(f"Tipo de shap_values: {type(shap_values)}")
-    # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
-    # print(f"Forma de X_val: {X_val.shape}")
+        # Verificar estructura de shap_values
+        # print(f"Tipo de shap_values: {type(shap_values)}")
+        # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
+        # print(f"Forma de X_val: {X_val.shape}")
 
-    # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
-    if len(shap_values.shape) == 3:
-        shap_values = shap_values[:, :, 1]  # ✅ Tomar solo los valores de la clase 1 (Ataque)
+        # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
+        if len(shap_values.shape) == 3:
+            shap_values = shap_values[:, :, 1]  # ✅ Tomar solo los valores de la clase 1 (Ataque)
 
-    # Crear un objeto en memoria para almacenar la imagen
-    img_buffer = io.BytesIO()
+        # Crear un objeto en memoria para almacenar la imagen
+        img_buffer = io.BytesIO()
 
-    # Crear figura sin mostrarla
-    plt.figure(figsize=(10, 6))
-    shap.summary_plot(shap_values, X_val, feature_names=X_val.columns.tolist(), show=False)
+        # Crear figura sin mostrarla
+        plt.figure(figsize=(10, 6))
+        shap.summary_plot(shap_values, X_val, feature_names=X_val.columns.tolist(), show=False)
+        
+        # Guardar imagen en memoria en formato PNG
+        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
+        plt.close()  # Cerrar la figura sin mostrarla
+
+        # Posicionar el puntero al inicio del buffer para lectura
+        img_buffer.seek(0)
+
+        print("✅ Gráfico SHAP generado y guardado en memoria.")
+
+        return img_buffer  # Devolver la imagen en un objeto BytesIO
     
-     # Guardar imagen en memoria en formato PNG
-    plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
-    plt.close()  # Cerrar la figura sin mostrarla
+    else:
+        # Crear el explicador específico para árboles de decisión
+        explainer = shap.TreeExplainer(model_test)
+        shap_values = explainer.shap_values(X_val)
 
-    # Posicionar el puntero al inicio del buffer para lectura
-    img_buffer.seek(0)
+        # Verificar estructura de shap_values
+        # print(f"Tipo de shap_values: {type(shap_values)}")
+        # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
+        # print(f"Forma de X_val: {X_val.shape}")
 
-    print("✅ Gráfico SHAP generado y guardado en memoria.")
+        # Seleccionar una sola instancia
+        X_instance = X_val.iloc[[instancia]]
+    
+        # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
+        if len(shap_values.shape) == 3:
+            shap_values = shap_values[:, :, 1]  # ✅ Tomar solo los valores de la clase 1 (Ataque)
 
-    return img_buffer  # Devolver la imagen en un objeto BytesIO
+        # Seleccionar solo los SHAP values de la instancia específica
+        shap_values_instance = shap_values[instancia]
+    
+        # Crear un objeto en memoria para almacenar la imagen
+        img_buffer = io.BytesIO()
 
-    # shap.force_plot(explainer.expected_value, shap_values[0], X_val.iloc[0])
+        # Crear figura sin mostrarla
+        plt.figure(figsize=(10, 6))
+        shap.waterfall_plot(shap.Explanation(values=shap_values_instance, 
+                                         base_values=explainer.expected_value[1], 
+                                         data=X_instance.values[0], 
+                                         feature_names=X_instance.columns.tolist()))
+        
+        # Guardar imagen en memoria en formato PNG
+        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
+        plt.close()  # Cerrar la figura sin mostrarla
+
+        # Posicionar el puntero al inicio del buffer para lectura
+        img_buffer.seek(0)
+
+        print("✅ Gráfico SHAP generado y guardado en memoria.")
+
+        return img_buffer  # Devolver la imagen en un objeto BytesIO
 
 def main(model_test, path):  
     print("🚀 Iniciando explicabilidad...")
@@ -112,9 +151,11 @@ def main(model_test, path):
     X_val = datos["X_val"]
 
     
-    # exp = metodo_lime(model_test, X_train, X_val)
-    exp = metodo_shape(model_test, X_val, path)
+    exp = metodo_lime(model_test, X_train, X_val, 10)
+    # exp = metodo_shape(model_test, X_val, 1)
     
-    guardar_exp(path, exp, "shap")
+    guardar_exp(path, exp, "lime")
+    
+    print("🎯 Proceso de explicabilidad finalizado.")
 
     
