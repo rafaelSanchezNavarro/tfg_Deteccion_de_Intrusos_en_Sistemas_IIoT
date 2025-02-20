@@ -3,7 +3,6 @@ import os
 import sys
 import shutil
 
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sklearn.model_selection import train_test_split
@@ -11,6 +10,7 @@ from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
 from scripts.preprocesamiento.conversion import fix_dtype, delete_ip_port
 from scripts.preprocesamiento.calculos import calculo_varianza
 from scripts.preprocesamiento.reduccion_dimensionalidad import correlacion_pares, correlacion_respecto_objetivo, seleccionar_variables_pca, seleccionar_variables_rfe, seleccionar_variables_randomForest, proyectar_tsne
+from scripts.preprocesamiento.outliers import outliers
 
 def cargar_datos():
     """Carga el dataset original y lo devuelve como un DataFrame."""
@@ -180,6 +180,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train = fix_mayus(X_train)
     X_train = fix_dtype(X_train)
     X_train = delete_ip_port(X_train)
+    # X_train = outliers(X_train)  
         
     y_train_class3 = y_train_class3.loc[X_train.index]
     y_train_class2 = y_train_class2.loc[X_train.index]
@@ -189,6 +190,7 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_val = fix_mayus(X_val)
     X_val = fix_dtype(X_val)
     X_val = delete_ip_port(X_val)
+    # X_val = outliers(X_val)
 
     y_val_class3 = y_val_class3.loc[X_val.index]
     y_val_class2 = y_val_class2.loc[X_val.index]
