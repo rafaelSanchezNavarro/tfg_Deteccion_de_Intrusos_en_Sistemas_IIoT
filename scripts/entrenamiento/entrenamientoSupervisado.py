@@ -207,16 +207,16 @@ def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_cla
         pipeline.fit(X_train_class2, y_train_class2_filtered)
         print("➡️  Entrenamiento completo.")
 
-
         # Realizar predicciones
         print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class2 = pipeline.predict(X_val_class2)
         print("➡️  Predicciones realizadas.")
 
-
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_val_class2_filtered, y_pred_class2)
         print(f'📈 Accuracy (validacion): {accuracy:.4f}')
+        
+        return pipeline
 
 def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1):
         indices_train = np.where(y_train_class3.values == 1)[0]
@@ -262,7 +262,7 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
         accuracy = accuracy_score(y_val_class1_filtered, y_pred_class1)
         print(f'📈 Accuracy (validacion): {accuracy:.4f}')
         
-        # print(classification_report(y_val_class1_filtered, y_pred_class1))
+        return pipeline
         
 def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble):  
     print("🚀 Iniciando entrenamiento...")
@@ -283,10 +283,14 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, e
     y_val_class1 = datos["y_val_class1"]
     
     # Entrenar el modelo
-    pipeline, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
-    clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
-    clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
+    pipeline_class3, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
+    pipeline_class2 = clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
+    pipeline_class1 = clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
     
     print("🎯 Entrenamiento finalizado")
-    pipeline = pipeline.named_steps['model']
-    return pipeline, accuracy, precision, recall, f1, roc
+    
+    pipeline_class3 = pipeline_class3.named_steps['model']
+    pipeline_class2 = pipeline_class2.named_steps['model']
+    pipeline_class1 = pipeline_class1.named_steps['model']
+    
+    return pipeline_class3, accuracy, precision, recall, f1, roc, pipeline_class2, pipeline_class1

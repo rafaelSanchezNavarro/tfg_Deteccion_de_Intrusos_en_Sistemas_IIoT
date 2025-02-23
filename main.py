@@ -11,12 +11,11 @@ from scripts.entrenamiento import entrenamientoNoSupervisado, entrenamientoSuper
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
 from modelos.diccionario_modelos import algorithms
 
-from scripts.test import test
-
 
 def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
                  normalizacion, discretizador, decodificador, 
-                 caracteritisticas_seleccionadas, caracteritisticas_procesadas, grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad):
+                 caracteritisticas_seleccionadas, caracteritisticas_procesadas, grid, random_grid, 
+                 validacion_grid, ensemble, reduccion_dimensionalidad, model_class2, model_class1):
     
     # Crear la carpeta si no existe
     output_dir = f"modelos/{model.__class__.__name__}_{accuracy:.4f}"
@@ -56,6 +55,16 @@ def guardar_conf(model, accuracy, precision, recall, f1, roc, imputador_cat, imp
     nombre_modelo = f"{model.__class__.__name__}_{accuracy:.4f}.pkl"
     path = os.path.join(output_dir, nombre_modelo)
     joblib.dump(model, path)
+    
+    # Guardar el modelo
+    nombre_modelo_class2 = f"{model_class2.__class__.__name__}_class2.pkl"
+    path = os.path.join(output_dir, nombre_modelo_class2)
+    joblib.dump(model_class2, path)
+    
+    # Guardar el modelo
+    nombre_modelo_class1 = f"{model_class1.__class__.__name__}_class1.pkl"
+    path = os.path.join(output_dir, nombre_modelo_class1)
+    joblib.dump(model_class1, path)
     
     # Guardar resumen
     resumen = crear_resumen(model, accuracy, precision, recall, f1, roc, imputador_cat, imputador_num, 
@@ -147,7 +156,7 @@ def main():
     
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['SVC'](random_state=random_state) # Poner semilla a los que la necesiten
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     
     
     # Entrenamiento #########################################################################
@@ -157,7 +166,7 @@ def main():
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
-    model_train, accuracy, precision, recall, f1, roc  = entrenamientoSupervisado.main(
+    model_train, accuracy, precision, recall, f1, roc, model_train_class2, model_train_class1  = entrenamientoSupervisado.main(
                         random_state,
                         model,
                         grid,
@@ -172,7 +181,7 @@ def main():
     # guardar_conf(model_train, accuracy)
     guardar_conf(model_train, accuracy, precision, recall, f1, roc, imputador_cat, 
                  imputador_num, normalizacion, discretizador, decodificador, caracteritisticas_seleccionadas, caracteritisticas_procesadas, 
-                 grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad)
+                 grid, random_grid, validacion_grid, ensemble, reduccion_dimensionalidad, model_train_class2, model_train_class1)
     
     # entrenamientoNoSupervisado.main(random_state=random_state)
     

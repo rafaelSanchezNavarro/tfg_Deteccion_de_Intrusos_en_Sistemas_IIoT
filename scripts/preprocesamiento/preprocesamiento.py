@@ -23,7 +23,7 @@ def cargar_datos():
         print("❌ Error: No se encontró el archivo.")
         return None
 
-def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1, X_test, y_test_class3, output_dir):
+def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_class3, y_train_class2, y_val_class2, y_train_class1, y_val_class1, X_test, y_test_class3, y_test_class2, y_test_class1, output_dir):
     # Si la carpeta ya existe, eliminarla completamente
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)  # Borra la carpeta y todo su contenido
@@ -44,8 +44,10 @@ def guardar_datos(X_train_processed, X_val_processed, y_train_class3, y_val_clas
     y_train_class1.to_csv(os.path.join(output_dir, "y_train_class1.csv"), index=False)
     y_val_class1.to_csv(os.path.join(output_dir, "y_val_class1.csv"), index=False)
     
-    X_test.to_csv(os.path.join(output_dir, "X_test_sin_pre.csv"), index=False)
-    y_test_class3.to_csv(os.path.join(output_dir, "y_test_class3_sin_pre.csv"), index=False)
+    X_test.to_csv(os.path.join(output_dir, "X_test.csv"), index=False)
+    y_test_class3.to_csv(os.path.join(output_dir, "y_test_class3.csv"), index=False)
+    y_test_class2.to_csv(os.path.join(output_dir, "y_test_class2.csv"), index=False)
+    y_test_class1.to_csv(os.path.join(output_dir, "y_test_class1.csv"), index=False)
     
 def dividir_datos(df, random_state):
     """Divide los datos en entrenamiento, validación y prueba."""
@@ -252,6 +254,8 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
                   y_val_class1,
                   X_test,
                   y_test_class3, 
+                  y_test_class2,
+                  y_test_class1,
                   output_dir)
     
     print(f"📁 Archivos guardados en: {output_dir}\n")

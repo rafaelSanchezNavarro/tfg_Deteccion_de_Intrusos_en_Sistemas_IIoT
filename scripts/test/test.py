@@ -1,12 +1,11 @@
 import os
 import joblib
 from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report, f1_score, precision_score, recall_score, roc_auc_score, roc_curve
-from scripts.preprocesamiento.calculos import calculo_varianza
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
 from scripts.preprocesamiento.conversion import delete_ip_port, fix_dtype
-from scripts.preprocesamiento.reduccion_dimensionalidad import correlacion_pares, correlacion_respecto_objetivo
 
 def cargar_datos(pre_path):
     """Carga todos los archivos procesados, el preprocesamiento y los devuelve como un diccionario."""
@@ -14,7 +13,7 @@ def cargar_datos(pre_path):
     datos = {}
 
     # Cargar X_test
-    path_X_test = os.path.join(carpeta, "X_test_sin_pre.csv")
+    path_X_test = os.path.join(carpeta, "X_test.csv")
     try:
         datos["X_test"] = pd.read_csv(path_X_test, low_memory=False)
         print(f"✅ X_test cargado: {datos['X_test'].shape[0]} filas, {datos['X_test'].shape[1]} columnas.")
@@ -23,12 +22,30 @@ def cargar_datos(pre_path):
         return None
 
     # Cargar y_test_class3
-    path_y_test_class3 = os.path.join(carpeta, "y_test_class3_sin_pre.csv")
+    path_y_test_class3 = os.path.join(carpeta, "y_test_class3.csv")
     try:
         datos["y_test_class3"] = pd.read_csv(path_y_test_class3, low_memory=False)
         print(f"✅ y_test_class3 cargado: {datos['y_test_class3'].shape[0]} filas, {datos['y_test_class3'].shape[1]} columnas.")
     except FileNotFoundError:
         print(f"❌ Error: No se encontró {path_y_test_class3}.")
+        return None
+    
+    # Cargar y_test_class2
+    path_y_test_class2 = os.path.join(carpeta, "y_test_class2.csv")
+    try:
+        datos["y_test_class2"] = pd.read_csv(path_y_test_class2, low_memory=False)
+        print(f"✅ y_test_class2 cargado: {datos['y_test_class2'].shape[0]} filas, {datos['y_test_class2'].shape[1]} columnas.")
+    except FileNotFoundError:
+        print(f"❌ Error: No se encontró {path_y_test_class2}.")
+        return None
+    
+    # Cargar y_test_class2
+    path_y_test_class1 = os.path.join(carpeta, "y_test_class1.csv")
+    try:
+        datos["y_test_class1"] = pd.read_csv(path_y_test_class1, low_memory=False)
+        print(f"✅ y_test_class1 cargado: {datos['y_test_class1'].shape[0]} filas, {datos['y_test_class1'].shape[1]} columnas.")
+    except FileNotFoundError:
+        print(f"❌ Error: No se encontró {path_y_test_class1}.")
         return None
 
     # Cargar componentes de preprocesamiento
@@ -49,20 +66,24 @@ def cargar_datos(pre_path):
 
     return datos
 
-def guardar_conf(pre_path, accuracy, precision, recall, f1, roc, clasr):
+def guardar_conf(pre_path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, class2_report, accuracy_class1, class1_report):
     # Guardar resumen
-    resumen = crear_resumen(accuracy, precision, recall, f1, roc, clasr)
+    resumen = crear_resumen(accuracy, precision, recall, f1, roc, class_report, accuracy_class2, class2_report, accuracy_class1, class1_report)
     path_resumen = os.path.join(f"modelos/{pre_path}", "resumen_test.txt")
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
 
-def crear_resumen(accuracy, precision, recall, f1_score, roc, clasr):
+def crear_resumen(accuracy, precision, recall, f1_score, roc, class_report, accuracy_class2, class2_report, accuracy_class1, class1_report):
     texto = f"Accuracy: {accuracy:.4f}\n"
     texto += f"Precision: {precision:.4f}\n"
     texto += f"Recall: {recall:.4f}\n"
     texto += f"F1 Score: {f1_score:.4f}\n"
     texto += f"ROC AUC: {roc:.4f}\n\n"
-    texto += clasr
+    texto += class_report
+    texto += f"\n Accuracy Categoria: {accuracy_class2:.4f}\n\n"
+    texto += class2_report
+    texto += f"\n Accuracy Tipo: {accuracy_class1:.4f}\n\n"
+    texto += class1_report
     return texto 
 
 def preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador):
@@ -141,43 +162,7 @@ def graficar_roc(y_test_class3, y_pred_class3):
     plt.grid(True)
     plt.show()
  
-def main(model, path):  
-    print("🚀 Iniciando test...")
-    
-    # Cargar todos los archivos de datos procesados
-    datos = cargar_datos(path)
-
-    # Asignar los DataFrames a variables individuales
-    X_test = datos["X_test"]
-    y_test_class3 = datos["y_test_class3"]
-    imputador_cat = datos["imputador_cat"]
-    imputador_num = datos["imputador_num"]
-    normalizacion = datos["normalizacion"]
-    if "discretizador" in datos:
-        discretizador = datos["discretizador"]
-    else:
-        discretizador = None
-    decodificador = datos["decodificador"]
-    caracteritisticas_seleccionadas = datos["caracteritisticas_seleccionadas"]
-    caracteritisticas_procesadas = datos["caracteritisticas_procesadas"]
-    
-    
-    X_test = replace_common_values(X_test)
-    X_test = fix_mayus(X_test)
-    X_test = fix_dtype(X_test)
-    X_test = delete_ip_port(X_test)
-    
-    y_test_class3 = y_test_class3.loc[X_test.index]
-        
-    X_test = X_test[caracteritisticas_seleccionadas] 
-        
-    X_test['Protocol'] = X_test['Protocol'].fillna("missing")
-    
-    # Preprocesar los datos de test
-    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
-    X_test_processed = X_test_processed[caracteritisticas_procesadas]
-    print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
-    
+def clasificacion_binaria(y_test_class3, X_test_processed, model):
     # Realizar predicciones
     y_pred_class3 = model.predict(X_test_processed)
 
@@ -197,12 +182,93 @@ def main(model, path):
     print(f"📈 F1 (Test): {f1:.4f}")
     
     roc = roc_auc_score(y_test_class3, y_pred_class3)
-    print(f'📈 ROC (validacion): {roc:.4f}')
+    print(f'📈 ROC (Test): {roc:.4f}')
     
     graficar_roc(y_test_class3, y_pred_class3)
 
-    clasr = classification_report(y_test_class3, y_pred_class3)
+    class_report = classification_report(y_test_class3, y_pred_class3)
+ 
+    return accuracy, precision, recall, f1, roc, class_report, y_pred_class3
+ 
+def clasificacion_multiclase_categoria(y_test_class3, y_test_class2, X_test_processed, model_class2):
+        indices_test = np.where(y_test_class3.values == 1)[0]
+        X_test_class2 = X_test_processed.iloc[indices_test]
+        y_test_class2_filtered = y_test_class2.iloc[indices_test]
+
+        y_test_class2_filtered = y_test_class2_filtered.values.ravel()
+        
+        # Realizar predicciones
+        y_pred_class2 = model_class2.predict(X_test_class2)
+
+        # Evaluar el rendimiento
+        accuracy = accuracy_score(y_test_class2_filtered, y_pred_class2)
+        print(f'📈 Accuracy (Test): {accuracy:.4f}')
+        
+        class2_report = classification_report(y_test_class2_filtered, y_pred_class2)
+        return accuracy, class2_report
+ 
+def clasificacion_multiclase_tipo(y_test_class3, y_test_class1, X_test_processed, model):
+    indices_test = np.where(y_test_class3 == 1)[0]
+    X_test_processed_class1 = X_test_processed.iloc[indices_test]
+    y_test_class1_filtered = y_test_class1.iloc[indices_test]
+
     
-    guardar_conf(path, accuracy, precision, recall, f1, roc, clasr)
+    y_test_class1_filtered = y_test_class1_filtered.values.ravel()
+
+    # Realizar predicciones
+    y_pred_class1 = model.predict(X_test_processed_class1)
+
+    # Evaluar el rendimiento
+    accuracy = accuracy_score(y_test_class1_filtered, y_pred_class1)
+    print(f'📈 Accuracy (Test): {accuracy:.4f}')
+    
+    class3_report = classification_report(y_test_class1_filtered, y_pred_class1)
+        
+    return accuracy, class3_report
+
+def main(model, path, model_class2, model_class1):  
+    print("🚀 Iniciando test...")
+    
+    # Cargar todos los archivos de datos procesados
+    datos = cargar_datos(path)
+
+    # Asignar los DataFrames a variables individuales
+    X_test = datos["X_test"]
+    y_test_class3 = datos["y_test_class3"]
+    y_test_class2 = datos["y_test_class2"]
+    y_test_class1 = datos["y_test_class1"]
+    imputador_cat = datos["imputador_cat"]
+    imputador_num = datos["imputador_num"]
+    normalizacion = datos["normalizacion"]
+    if "discretizador" in datos:
+        discretizador = datos["discretizador"]
+    else:
+        discretizador = None
+    decodificador = datos["decodificador"]
+    caracteritisticas_seleccionadas = datos["caracteritisticas_seleccionadas"]
+    caracteritisticas_procesadas = datos["caracteritisticas_procesadas"]
+    
+    X_test = replace_common_values(X_test)
+    X_test = fix_mayus(X_test)
+    X_test = fix_dtype(X_test)
+    X_test = delete_ip_port(X_test)
+    
+    y_test_class3 = y_test_class3.loc[X_test.index]
+        
+    X_test = X_test[caracteritisticas_seleccionadas] 
+        
+    X_test['Protocol'] = X_test['Protocol'].fillna("missing")
+    
+    # Preprocesar los datos de test
+    X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
+    X_test_processed = X_test_processed[caracteritisticas_procesadas]
+    print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
+
+    accuracy, precision, recall, f1, roc, class_report, prediccion_class3 = clasificacion_binaria(y_test_class3, X_test_processed, model)
+    accuracy_class2, class2_report = clasificacion_multiclase_categoria(y_test_class3, y_test_class2, X_test_processed, model_class2)
+    accuracy_class1, class1_report = clasificacion_multiclase_tipo(y_test_class3, y_test_class1, X_test_processed, model_class1)
+    
+    # guardar_conf(path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, accuracy_class1)
+    guardar_conf(path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, class2_report, accuracy_class1, class1_report)
     
     print("🎯 Test finalizado.\n")
