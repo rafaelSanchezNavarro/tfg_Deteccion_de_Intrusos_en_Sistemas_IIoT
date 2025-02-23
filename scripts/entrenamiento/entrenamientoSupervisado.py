@@ -174,7 +174,8 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
         
         return pipeline, accuracy, precision, recall, f1, roc
 
-def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2):
+def clasificacion_multiclase_categoria(random_state, model, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2):
+            
         indices_train = np.where(y_train_class3.values == 1)[0]
         X_train_class2 = X_train.iloc[indices_train]
         y_train_class2_filtered = y_train_class2.iloc[indices_train]
@@ -193,7 +194,6 @@ def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_cla
             X_train_class2[boolean_cols] = X_train_class2[boolean_cols].astype(int)
         numerical_cols = X_train_class2.select_dtypes(include=['float64', 'int64']).columns
         
-        model = algorithms['DecisionTreeClassifier'](random_state=random_state)
         print("➡️  Creando el pipeline multiclase categoria...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
@@ -218,7 +218,8 @@ def clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_cla
         
         return pipeline
 
-def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1):
+def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1):
+        
         indices_train = np.where(y_train_class3.values == 1)[0]
         X_train_class1 = X_train.iloc[indices_train]
         y_train_class1_filtered = y_train_class1.iloc[indices_train]
@@ -237,7 +238,6 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
             X_train_class1[boolean_cols] = X_train_class1[boolean_cols].astype(int)
         numerical_cols = X_train_class1.select_dtypes(include=['float64', 'int64']).columns
         
-        model = algorithms['DecisionTreeClassifier'](random_state=random_state)
         print("➡️  Creando el pipeline multiclase tipo...")
         pipeline = create_pipeline(
             model=model,  # Modelo del algoritmo final (ensemble)
@@ -264,7 +264,7 @@ def clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, 
         
         return pipeline
         
-def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble):  
+def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble, model_class2, model_class1):  
     print("🚀 Iniciando entrenamiento...")
     
     # Cargar todos los archivos de datos preprocesados
@@ -284,8 +284,8 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, e
     
     # Entrenar el modelo
     pipeline_class3, accuracy, precision, recall, f1, roc = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
-    pipeline_class2 = clasificacion_multiclase_categoria(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
-    pipeline_class1 = clasificacion_multiclase_tipo(random_state, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
+    pipeline_class2 = clasificacion_multiclase_categoria(random_state, model_class2, X_train, X_val, y_train_class3, y_val_class3, y_train_class2 , y_val_class2)
+    pipeline_class1 = clasificacion_multiclase_tipo(random_state, model_class1, X_train, X_val, y_train_class3, y_val_class3, y_train_class1 , y_val_class1)
     
     print("🎯 Entrenamiento finalizado")
     

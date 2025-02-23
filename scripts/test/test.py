@@ -212,7 +212,6 @@ def clasificacion_multiclase_tipo(y_test_class3, y_test_class1, X_test_processed
     X_test_processed_class1 = X_test_processed.iloc[indices_test]
     y_test_class1_filtered = y_test_class1.iloc[indices_test]
 
-    
     y_test_class1_filtered = y_test_class1_filtered.values.ravel()
 
     # Realizar predicciones

@@ -141,22 +141,24 @@ def main():
     
     # Eleccion del modelo ###################################################################
     
-    ensemble = False
+    ensemble = True
     
-    # clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
-    # clf2 = algorithms['GaussianNB']()
-    # model = VotingClassifier(
-    #     estimators=[
-    #             ('mwbp', clf1), # Modelo baso en arboles
-    #             ('gnb', clf2),
-    #             # añadir mas diversidad de algoritmos que no esten basados en arboles
-    #         ],
-    #         voting='soft'  # Cambiar a 'hard' para votación mayoritaria
-    #     )
+    clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
+    clf2 = algorithms['GaussianNB']()
+    model = VotingClassifier(
+        estimators=[
+                ('mwbp', clf1), # Modelo baso en arboles
+                ('gnb', clf2),
+                # añadir mas diversidad de algoritmos que no esten basados en arboles
+            ],
+            voting='soft'  # Cambiar a 'hard' para votación mayoritaria
+        )
     
-    # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
+    print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
+    # model = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
+    model_class2 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
+    model_class1 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
     
     
     # Entrenamiento #########################################################################
@@ -173,7 +175,9 @@ def main():
                         validacion_grid,
                         grid_n_iter,
                         random_grid,
-                        ensemble
+                        ensemble,
+                        model_class2,
+                        model_class1
     )
         
     # Guardar modelo #######################################################################
