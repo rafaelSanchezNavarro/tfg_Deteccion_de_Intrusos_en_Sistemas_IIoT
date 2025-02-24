@@ -166,8 +166,7 @@ def clasificacion_binaria(y_test_class3, X_test_processed, model):
     # Realizar predicciones
     y_pred_class3 = model.predict(X_test_processed)
 
-    # Si necesitas probabilidades
-    probabilities = model.predict_proba(X_test_processed)
+    probabilidades = model.predict_proba(X_test_processed)
     
     accuracy = accuracy_score(y_test_class3, y_pred_class3)
     print(f"📈 Accuracy (Test): {accuracy:.4f}")
@@ -184,46 +183,52 @@ def clasificacion_binaria(y_test_class3, X_test_processed, model):
     roc = roc_auc_score(y_test_class3, y_pred_class3)
     print(f'📈 ROC (Test): {roc:.4f}')
     
-    graficar_roc(y_test_class3, y_pred_class3)
+    # graficar_roc(y_test_class3, y_pred_class3)
 
     class_report = classification_report(y_test_class3, y_pred_class3)
  
-    return accuracy, precision, recall, f1, roc, class_report, y_pred_class3
+    return accuracy, precision, recall, f1, roc, class_report, y_pred_class3, probabilidades
  
-def clasificacion_multiclase_categoria(y_test_class3, y_test_class2, X_test_processed, model_class2):
-        indices_test = np.where(y_test_class3.values == 1)[0]
+def clasificacion_multiclase_categoria(y_pred_class3, y_test_class2, X_test_processed, model_class2):
+    
+        indices_test = np.where(y_pred_class3 == 1)[0]
+        
         X_test_class2 = X_test_processed.iloc[indices_test]
         y_test_class2_filtered = y_test_class2.iloc[indices_test]
-
         y_test_class2_filtered = y_test_class2_filtered.values.ravel()
         
         # Realizar predicciones
         y_pred_class2 = model_class2.predict(X_test_class2)
 
+        probabilidades = model_class2.predict_proba(X_test_class2)
+
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_test_class2_filtered, y_pred_class2)
         print(f'📈 Accuracy (Test): {accuracy:.4f}')
         
-        class2_report = classification_report(y_test_class2_filtered, y_pred_class2)
-        return accuracy, class2_report
+        class2_report = classification_report(y_test_class2_filtered, y_pred_class2, zero_division=0)
+        return accuracy, class2_report, probabilidades
  
-def clasificacion_multiclase_tipo(y_test_class3, y_test_class1, X_test_processed, model):
-    indices_test = np.where(y_test_class3 == 1)[0]
-    X_test_processed_class1 = X_test_processed.iloc[indices_test]
+def clasificacion_multiclase_tipo(y_pred_class3, y_test_class1, X_test_processed, model_class1):
+    
+    indices_test = np.where(y_pred_class3 == 1)[0]
+        
+    X_test_clas1 = X_test_processed.iloc[indices_test]
     y_test_class1_filtered = y_test_class1.iloc[indices_test]
-
     y_test_class1_filtered = y_test_class1_filtered.values.ravel()
 
     # Realizar predicciones
-    y_pred_class1 = model.predict(X_test_processed_class1)
+    y_pred_class1 = model_class1.predict(X_test_clas1)
+    
+    probabilidades = model_class1.predict_proba(X_test_clas1)
 
     # Evaluar el rendimiento
     accuracy = accuracy_score(y_test_class1_filtered, y_pred_class1)
     print(f'📈 Accuracy (Test): {accuracy:.4f}')
     
-    class3_report = classification_report(y_test_class1_filtered, y_pred_class1)
+    class3_report = classification_report(y_test_class1_filtered, y_pred_class1, zero_division=0)
         
-    return accuracy, class3_report
+    return accuracy, class3_report, probabilidades
 
 def main(model, path, model_class2, model_class1):  
     print("🚀 Iniciando test...")
@@ -263,11 +268,50 @@ def main(model, path, model_class2, model_class1):
     X_test_processed = X_test_processed[caracteritisticas_procesadas]
     print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
 
-    accuracy, precision, recall, f1, roc, class_report, prediccion_class3 = clasificacion_binaria(y_test_class3, X_test_processed, model)
-    accuracy_class2, class2_report = clasificacion_multiclase_categoria(y_test_class3, y_test_class2, X_test_processed, model_class2)
-    accuracy_class1, class1_report = clasificacion_multiclase_tipo(y_test_class3, y_test_class1, X_test_processed, model_class1)
+    accuracy, precision, recall, f1, roc, class_report, y_pred_class3, probabilidades_class3 = clasificacion_binaria(y_test_class3, X_test_processed, model)
+    accuracy_class2, class2_report, probabilidades_class2 = clasificacion_multiclase_categoria(y_pred_class3, y_test_class2, X_test_processed, model_class2)
+    accuracy_class1, class1_report, probabilidades_class1 = clasificacion_multiclase_tipo(y_pred_class3, y_test_class1, X_test_processed, model_class1)
+    
+    
     
     # guardar_conf(path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, accuracy_class1)
     guardar_conf(path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, class2_report, accuracy_class1, class1_report)
+    
+    
+    
+    
+    
+    print(y_test_class2.value_counts())
+    print(y_test_class1.value_counts())
+    
+    
+    categorias = ["Normal", "RDOS", "Reconnaissance", "Weaponization", "Lateral _movement",
+              "Exfiltration", "Tampering", "C&C", "Exploitation", "crypto-ransomware"]
+
+    tipos = ["Normal", "RDOS", "Scanning_vulnerability", "Generic_scanning", "BruteForce",
+            "MQTT_cloud_broker_subscription", "Discovering_resources", "Exfiltration",
+            "insider_malcious", "Modbus_register_reading", "False_data_injection", "C&C",
+            "Dictionary", "TCP Relay", "fuzzing", "Reverse_shell", "crypto-ransomware",
+            "MitM", "Fake_notification"]
+    
+    instancia = 5
+    prob_ataque = probabilidades_class3[instancia][1]  # Probabilidad de ataque (clase 1) en la instancia 1
+    top_probabilidades = []
+
+    for i in range(len(probabilidades_class2[instancia])):  # Recorre categorías para la instancia 1
+        for j in range(len(probabilidades_class1[instancia])):  # Recorre tipos para la instancia 1
+            prob_cat = probabilidades_class2[instancia][i]  # Probabilidad de la categoría i
+            prob_tipo = probabilidades_class1[instancia][j]  # Probabilidad del tipo j
+            prob_total = prob_ataque * prob_cat * prob_tipo
+
+            # Guardar la combinación con su probabilidad
+            top_probabilidades.append((prob_total, categorias[i], tipos[j]))
+
+    # Ordenar de mayor a menor y tomar los 3 primeros
+    top_probabilidades = sorted(top_probabilidades, reverse=True, key=lambda x: x[0])[:3]
+
+    # Imprimir los 3 más probables
+    for prob_total, categoria, tipo in top_probabilidades:
+        print(f"Categoría: {categoria}, Tipo: {tipo}, Probabilidad total: {prob_total:.8f}")
     
     print("🎯 Test finalizado.\n")

@@ -138,27 +138,30 @@ def main():
                         reduccion_dimensionalidad
     )
     
+    # caracteritisticas_seleccionadas = ['Protocol', 'Service', 'Duration', 'Conn_state', 'is_syn_only', 'Is_SYN_ACK', 'is_with_payload', 'anomaly_alert', 'total_bytes', 'total_packet', 'paket_rate', 'Avg_user_time', 'Std_user_time', 'Avg_nice_time', 'Std_nice_time', 'Avg_system_time', 'Std_system_time', 'Avg_iowait_time', 'Avg_ideal_time', 'Avg_tps', 'Avg_rtps', 'Std_wtps', 'Avg_ldavg_1', 'Avg_kbmemused', 'Avg_num_cswch/s', 'std_num_cswch/s', 'OSSEC_alert', 'Login_attempt', 'File_activity', 'read_write_physical.process']
+    # caracteritisticas_procesadas = ['is_syn_only_scaled', 'Avg_ideal_time_scaled', 'Avg_system_time_scaled', 'std_num_cswch/s_scaled', 'paket_rate_scaled', 'Avg_num_cswch/s_scaled', 'total_bytes_scaled', 'Protocol_tcp', 'Is_SYN_ACK_scaled', 'Std_user_time_scaled', 'Avg_nice_time_scaled', 'Std_system_time_scaled', 'read_write_physical.process_scaled', 'Avg_user_time_scaled', 'Avg_kbmemused_scaled', 'Duration_scaled', 'Protocol_udp', 'Service_coap', 'Service_dns', 'Avg_iowait_time_scaled', 'total_packet_scaled', 'Avg_tps_scaled', 'Service_http', 'Avg_ldavg_1_scaled', 'Std_nice_time_scaled', 'Service_websocket', 'OSSEC_alert_scaled', 'Avg_rtps_scaled', 'Service_mqtt', 'is_with_payload_scaled', 'anomaly_alert_scaled', 'File_activity_scaled', 'Login_attempt_scaled', 'Std_wtps_scaled']
+    
     
     # Eleccion del modelo ###################################################################
     
-    ensemble = True
+    ensemble = False
     
-    clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
-    clf2 = algorithms['GaussianNB']()
-    model = VotingClassifier(
-        estimators=[
-                ('mwbp', clf1), # Modelo baso en arboles
-                ('gnb', clf2),
-                # añadir mas diversidad de algoritmos que no esten basados en arboles
-            ],
-            voting='soft'  # Cambiar a 'hard' para votación mayoritaria
-        )
+    # clf1 = algorithms['DecisionTreeClassifier'](random_state=random_state)
+    # clf2 = algorithms['GaussianNB']()
+    # model = VotingClassifier(
+    #     estimators=[
+    #             ('mwbp', clf1), # Modelo baso en arboles
+    #             ('gnb', clf2),
+    #             # añadir mas diversidad de algoritmos que no esten basados en arboles
+    #         ],
+    #         voting='soft'  # Cambiar a 'hard' para votación mayoritaria
+    #     )
     
-    print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
+    # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    # model = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
-    model_class2 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
-    model_class1 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
+    model_class2 = algorithms['CalibratedClassifierCV']() # Poner semilla a los que la necesiten
+    model_class1 = algorithms['CalibratedClassifierCV']() # Poner semilla a los que la necesiten
     
     
     # Entrenamiento #########################################################################

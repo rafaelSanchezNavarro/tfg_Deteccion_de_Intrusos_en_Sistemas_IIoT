@@ -5,6 +5,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.calibration import CalibratedClassifierCV
 
 
 algorithms = {
@@ -14,4 +15,5 @@ algorithms = {
     "SVC": SVC,  # SVM - Máquinas de vectores de soporte
     "LogisticRegression": LogisticRegression,  # LR - Regresión Logística
     "RandomForestClassifier": RandomForestClassifier,  # RF - Bosques Aleatorios
+    "CalibratedClassifierCV": CalibratedClassifierCV,  # CalibratedClassifierCV
 }
