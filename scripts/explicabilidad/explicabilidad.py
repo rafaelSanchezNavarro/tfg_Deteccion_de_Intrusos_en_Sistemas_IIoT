@@ -21,12 +21,12 @@ def cargar_datos():
         return None
 
     # Cargar X_val
-    path_X_val = os.path.join(carpeta, "X_val.csv")
+    path_X_test = os.path.join(carpeta, "X_test_preprocesado.csv")
     try:
-        datos["X_val"] = pd.read_csv(path_X_val, low_memory=False)
-        print(f"✅ X_val cargado: {datos['X_val'].shape[0]} filas, {datos['X_val'].shape[1]} columnas.")
+        datos["X_test"] = pd.read_csv(path_X_test, low_memory=False)
+        print(f"✅ X_test cargado: {datos['X_test'].shape[0]} filas, {datos['X_test'].shape[1]} columnas.")
     except FileNotFoundError:
-        print(f"❌ Error: No se encontró {path_X_val}.")
+        print(f"❌ Error: No se encontró {path_X_test}.")
         return None
     
     return datos
@@ -49,7 +49,7 @@ def guardar_exp(pre_path, exp, tipo):
             f.write(exp.getbuffer())  # 📌 Guardar la imagen de SHAP
         print(f"✅ Gráfico SHAP guardado en: {path_shap}")
 
-def metodo_lime(model_test, X_train, X_val, instancia):
+def metodo_lime(model_test, X_train, X_test, instancia):
     # Crear el explicador
     explainer = LimeTabularExplainer(X_train.values, 
                                     feature_names=X_train.columns.tolist(), 
@@ -59,23 +59,23 @@ def metodo_lime(model_test, X_train, X_val, instancia):
 
     # Seleccionar una muestra de prueba
     exp = explainer.explain_instance(
-        X_val.iloc[instancia].values, 
+        X_test.iloc[instancia].values, 
         lambda x: model_test.predict_proba(pd.DataFrame(x, columns=X_train.columns))
     )
     
     return exp
 
-def metodo_shape(model_test, X_val, instancia):
+def metodo_shape(model_test, X_test, instancia):
     
     if instancia is not None:
         # Crear el explicador específico para árboles de decisión
         explainer = shap.TreeExplainer(model_test)
-        shap_values = explainer.shap_values(X_val)
+        shap_values = explainer.shap_values(X_test)
 
         # Verificar estructura de shap_values
         # print(f"Tipo de shap_values: {type(shap_values)}")
         # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
-        # print(f"Forma de X_val: {X_val.shape}")
+        # print(f"Forma de X_test: {X_test.shape}")
 
         # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
         if len(shap_values.shape) == 3:
@@ -86,7 +86,7 @@ def metodo_shape(model_test, X_val, instancia):
 
         # Crear figura sin mostrarla
         plt.figure(figsize=(10, 6))
-        shap.summary_plot(shap_values, X_val, feature_names=X_val.columns.tolist(), show=False)
+        shap.summary_plot(shap_values, X_test, feature_names=X_test.columns.tolist(), show=False)
         
         # Guardar imagen en memoria en formato PNG
         plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
@@ -102,7 +102,7 @@ def metodo_shape(model_test, X_val, instancia):
     else:
         # Crear el explicador específico para árboles de decisión
         explainer = shap.TreeExplainer(model_test)
-        shap_values = explainer.shap_values(X_val)
+        shap_values = explainer.shap_values(X_test)
 
         # Verificar estructura de shap_values
         # print(f"Tipo de shap_values: {type(shap_values)}")
@@ -110,7 +110,7 @@ def metodo_shape(model_test, X_val, instancia):
         # print(f"Forma de X_val: {X_val.shape}")
 
         # Seleccionar una sola instancia
-        X_instance = X_val.iloc[[instancia]]
+        X_instance = X_test.iloc[[instancia]]
     
         # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
         if len(shap_values.shape) == 3:
@@ -148,11 +148,11 @@ def main(model_test, path):
 
     # Asignar los DataFrames a variables individuales
     X_train = datos["X_train"]
-    X_val = datos["X_val"]
+    X_test = datos["X_test"]
 
     
-    exp = metodo_lime(model_test, X_train, X_val, 10)
-    # exp = metodo_shape(model_test, X_val, 1)
+    exp = metodo_lime(model_test, X_train, X_test, 9)
+    # exp = metodo_shape(model_test, X_test, 1)
     
     guardar_exp(path, exp, "lime")
     

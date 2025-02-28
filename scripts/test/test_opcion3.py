@@ -73,12 +73,6 @@ def guardar_conf(pre_path, accuracy, precision, recall, f1, roc, class_report, a
     with open(path_resumen, "w", encoding="utf-8") as f:
         f.write(resumen)
 
-def guardar_datos(X_test_processed, output_dir):
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    X_test_processed.to_csv(os.path.join(output_dir, "X_test_preprocesado.csv"), index=False)
-
 def crear_resumen(accuracy, precision, recall, f1_score, roc, class_report, accuracy_class2, class2_report):
     texto = f"Accuracy: {accuracy:.4f}\n"
     texto += f"Precision: {precision:.4f}\n"
@@ -192,7 +186,7 @@ def clasificacion_binaria(y_test_class3, X_test_processed, model):
     # graficar_roc(y_test_class3, y_pred_class3)
     
     predicciones_df = pd.DataFrame({'Predicciones': y_pred_class3})
-    predicciones_df.to_csv('predicciones_multiclase.csv', index=False)
+    predicciones_df.to_csv('op1.csv', index=False)
 
     class_report = classification_report(y_test_class3, y_pred_class3)
  
@@ -201,25 +195,21 @@ def clasificacion_binaria(y_test_class3, X_test_processed, model):
 def clasificacion_multiclase_categoria(y_pred_class3, y_test_class2, X_test_processed, model_class2):
 
         print("🔮 Clasificación multiclase (Categoría)...")
-        indices_test = np.where(y_pred_class3 == 1)[0]
-        X_test_processed = X_test_processed.iloc[indices_test]
-        y_test_class2 = y_test_class2.iloc[indices_test].values.ravel()
-        
+        # indices_test = np.where(y_pred_class3)[0]
+        # print(len(indices_test))
+        # # X_test_processed = X_test_processed.iloc[indices_test]
+        # y_test_class2 = y_test_class2.iloc[indices_test].values.ravel()
+
+        y_test_class2 = y_test_class2.values.ravel()
         # Realizar predicciones
         y_pred_class2 = model_class2.predict(X_test_processed)
         
         probabilidades = model_class2.predict_proba(X_test_processed)
 
-        # Inicializar el array de probabilidades completas con ceros
-        probabilidades_completas = np.zeros((len(y_pred_class3), probabilidades.shape[1]))
-
-        # Asignar probabilidades solo en los índices correspondientes
-        probabilidades_completas[indices_test] = probabilidades
-        
         # Evaluar el rendimiento
         accuracy = accuracy_score(y_test_class2, y_pred_class2)
         print(f'📈 Accuracy (Test): {accuracy:.4f}')
-        
+
         precision = precision_score(y_test_class2, y_pred_class2, average='weighted', zero_division=0)
         print(f'📈 Precision (Test): {precision:.4f}')
         recall = recall_score(y_test_class2, y_pred_class2, average='weighted')
@@ -228,17 +218,18 @@ def clasificacion_multiclase_categoria(y_pred_class3, y_test_class2, X_test_proc
         print(f'📈 F1 (Test): {f1:.4f}')
         
         # Cargar el CSV existente
-        predicciones_df = pd.read_csv('predicciones_multiclase.csv')
+        predicciones_df = pd.read_csv('op1.csv')
         
         # Añadir las nuevas predicciones como una nueva columna
-        predicciones_df['Predicciones_Class2'] = "Normal"  # Inicializa la columna con NaN
-        predicciones_df.loc[indices_test, 'Predicciones_Class2'] = y_pred_class2  # Asigna las predicciones
+        # predicciones_df['Predicciones_Class2'] = "Normal"  # Inicializa la columna con NaN
+        predicciones_df['Predicciones_Class2'] = y_pred_class2
+  # Asigna las predicciones
         
         # Guardar el DataFrame actualizado en el CSV
-        predicciones_df.to_csv('predicciones_multiclase.csv', index=False)
-    
+        predicciones_df.to_csv('op1.csv', index=False)
+
         class2_report = classification_report(y_test_class2, y_pred_class2, zero_division=0)
-        return accuracy, class2_report, y_pred_class2, probabilidades_completas
+        return accuracy, class2_report, y_pred_class2, probabilidades
  
 def clasificacion_multiclase_tipo(y_pred_class3, y_pred_class2, y_test_class1, X_test_processed, models_class1):
 
@@ -255,12 +246,14 @@ def clasificacion_multiclase_tipo(y_pred_class3, y_pred_class2, y_test_class1, X
     
     y_pred_class1_total = ["Normal"] * len(indices_test)  # Inicializa con "Normal"
     # Leer el CSV una vez
-    predicciones_df = pd.read_csv('predicciones_multiclase.csv')
+    predicciones_df = pd.read_csv('op1.csv')
 
     for name in class_names:
         
         print(f"🔮 Clasificación multiclase (Tipo) para {name}...")
-        indices_test_cat = np.where(y_pred_class2 == name)[0]
+        indices_filtrados = np.where(y_pred_class2 != "Normal")[0]
+        y_pred_class2_filtrado = y_pred_class2[indices_filtrados]
+        indices_test_cat = np.where(y_pred_class2_filtrado == name)[0]
         X_test_processed_cat = X_test_processed.iloc[indices_test_cat]
         y_test_class1_cat = y_test_class1[indices_test_cat]
         
@@ -316,9 +309,9 @@ def clasificacion_multiclase_tipo(y_pred_class3, y_pred_class2, y_test_class1, X
     predicciones_df.loc[normal_indices, 'Predicciones_Class1'] = "Normal"
 
     # Guardar el DataFrame actualizado en el CSV
-    predicciones_df.to_csv('predicciones_multiclase.csv', index=False)
+    predicciones_df.to_csv('op1.csv', index=False)
             
-    return accuracy, probabilidades_tipo, class_names
+    return accuracy, probabilidades_tipo
 
 def main(model, path, model_class2, models_class1):  
     print("🚀 Iniciando test...")
@@ -357,14 +350,10 @@ def main(model, path, model_class2, models_class1):
     X_test_processed = preprocesamiento_test(X_test, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     X_test_processed = X_test_processed[caracteritisticas_procesadas]
     print(f"✅ Preprocesamiento de test finalizado: {X_test_processed.shape[0]} filas, {X_test_processed.shape[1]} columnas.")
-    
-    output_dir = "datos/preprocesados"
-    guardar_datos(X_test_processed,
-                  output_dir)
 
     accuracy, precision, recall, f1, roc, class_report, y_pred_class3, probabilidades_class3 = clasificacion_binaria(y_test_class3, X_test_processed, model)
     accuracy_class2, class2_report, y_pred_class2, probabilidades_class2 = clasificacion_multiclase_categoria(y_pred_class3, y_test_class2, X_test_processed, model_class2)
-    accuracy_class1_tipo, probabilidades_class1_tipo, class_names = clasificacion_multiclase_tipo(y_pred_class3, y_pred_class2, y_test_class1, X_test_processed, models_class1)
+    accuracy_class1_tipo, probabilidades_class1_tipo = clasificacion_multiclase_tipo(y_pred_class3, y_pred_class2, y_test_class1, X_test_processed, models_class1)
     
     
     
@@ -372,17 +361,28 @@ def main(model, path, model_class2, models_class1):
     guardar_conf(path, accuracy, precision, recall, f1, roc, class_report, accuracy_class2, class2_report)
 
     
-    instancia = 6
+    # instancia = 5
     
-    max_prob_class3 = np.max(probabilidades_class3[instancia])
-    max_index_class3 = np.argmax(probabilidades_class3[instancia])
-
-    max_prob_class2 = np.max(probabilidades_class2[instancia])
-    max_index_class2 = np.argmax(probabilidades_class2[instancia])
-
-    print(f"Máximo probabilidad class3: {max_prob_class3}, Índice: {max_index_class3}")
-    print(f"Máximo probabilidad class2: {max_prob_class2}, Índice: {max_index_class2}")
-
-
+    # if probabilidades_class3[instancia][1] > 0.5:
+    #     print(y_test_class2.iloc[instancia])
+    #     predicciones_df = pd.read_csv('predicciones_multiclase.csv')
+    #     print(predicciones_df.iloc[instancia])
+    #     print("ataque")
+    #     indice_class2 = np.argmax(probabilidades_class2[instancia])
+    #     nombre_class2 = clases[indice_class2]
+        
+    #     if nombre_class2 not in ["RDOS", "Exfiltration", "C&C", "crypto-ransomware"]:
+    #         indice_class3 = np.argmax(probabilidades_class1_tipo[nombre_class2][instancia])
+    #         prob3 =  probabilidades_class1_tipo[nombre_class2][instancia]
+    #         categoria_maxima = max(prob3, key=prob3.get)
+    #         resultado = probabilidades_class3[instancia][1] * probabilidades_class2[instancia][indice_class2] * prob3[categoria_maxima]
+    #         print(nombre_class2, categoria_maxima)
+    #         print(resultado)
+    #     else:
+    #         resultado = probabilidades_class3[instancia][1] * probabilidades_class2[instancia][indice_class2]
+    #         print(nombre_class2)
+    #         print(resultado)
+    # else:
+    #     print("normal")
     
     print("🎯 Test finalizado.\n")

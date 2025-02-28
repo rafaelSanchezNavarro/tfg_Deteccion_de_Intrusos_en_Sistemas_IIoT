@@ -178,15 +178,9 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
 
 def clasificacion_multiclase_categoria(random_state, model, X_train, X_val, y_train_class3, y_train_class2 , y_val_class2, y_pred_class3):
         
-        indices_train = np.where(y_train_class3.values == 1)[0]
-        X_train = X_train.iloc[indices_train]
-        y_train_class2 = y_train_class2.iloc[indices_train]
+        
         y_train_class2 = y_train_class2.values.ravel()
         
-        
-        indices_val = np.where(y_pred_class3 == 1)[0]
-        X_val = X_val.iloc[indices_val]
-        y_val_class2 = y_val_class2.iloc[indices_val]
         y_val_class2 = y_val_class2.values.ravel()
         
         
@@ -233,17 +227,16 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
         
         pipeline_tipos = {}
         
-        indices_train = np.where(y_train_class3.values == 1)[0]
+        indices_train = np.where(y_train_class2.values != "Normal")[0]
         X_train = X_train.iloc[indices_train]
         y_train_class1 = y_train_class1.iloc[indices_train].values.ravel()
         y_train_class2 = y_train_class2.iloc[indices_train].values.ravel()
         
         # Filtrar los datos de validación
-        indices_val = np.where(y_pred_class3 == 1)[0]
+        indices_val = np.where(y_pred_class2 != "Normal")[0]
         X_val = X_val.iloc[indices_val]
         y_val_class1 = y_val_class1.iloc[indices_val].values.ravel()
         y_val_class2 = y_val_class2.iloc[indices_val].values.ravel()
-            
             
         class_names_tipo = np.unique(y_train_class1)
         weights = compute_class_weight('balanced', classes=class_names_tipo, y=y_train_class1)
@@ -268,7 +261,15 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
             if np.unique(y_train_class1_cat).size == 1:
                 continue   
                         
-            indices_val_cat = np.where(y_pred_class2 == name)[0]
+            # Filtrar los índices donde la predicción no es "Normal"
+            indices_filtrados = np.where(y_pred_class2 != "Normal")[0]
+
+            # Aplicar el filtro a y_pred_class2
+            y_pred_class2_filtrado = y_pred_class2[indices_filtrados]
+
+            # Obtener los índices donde la predicción es igual a name después del filtrado
+            indices_val_cat = np.where(y_pred_class2_filtrado == name)[0]           
+            
             X_val_cat = X_val.iloc[indices_val_cat]
             y_val_class1_cat = y_val_class1[indices_val_cat]
 
