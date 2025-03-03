@@ -6,6 +6,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.naive_bayes import MultinomialNB
+
 
 
 algorithms = {
@@ -16,4 +18,5 @@ algorithms = {
     "LogisticRegression": LogisticRegression,  # LR - Regresión Logística
     "RandomForestClassifier": RandomForestClassifier,  # RF - Bosques Aleatorios
     "CalibratedClassifierCV": CalibratedClassifierCV,  # CalibratedClassifierCV
+    "MultinomialNB": MultinomialNB,  # MultinomialNB
 }

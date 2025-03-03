@@ -130,18 +130,18 @@ def main():
     decodificador = encoders.encoders['one_hot']
     reduccion_dimensionalidad = seleccionar_variables_pca
     
-    # caracteritisticas_seleccionadas, caracteritisticas_procesadas = preprocesamiento.main(
-    #                     random_state,
-    #                     imputador_cat, 
-    #                     imputador_num, 
-    #                     normalizacion, 
-    #                     discretizador, 
-    #                     decodificador, 
-    #                     reduccion_dimensionalidad
-    # )
+    caracteritisticas_seleccionadas, caracteritisticas_procesadas = preprocesamiento.main(
+                        random_state,
+                        imputador_cat, 
+                        imputador_num, 
+                        normalizacion, 
+                        discretizador, 
+                        decodificador, 
+                        reduccion_dimensionalidad
+    )
     
-    caracteritisticas_seleccionadas = ['Protocol', 'Service', 'Duration', 'Conn_state', 'is_syn_only', 'Is_SYN_ACK', 'is_with_payload', 'anomaly_alert', 'total_bytes', 'total_packet', 'paket_rate', 'Avg_user_time', 'Std_user_time', 'Avg_nice_time', 'Std_nice_time', 'Avg_system_time', 'Std_system_time', 'Avg_iowait_time', 'Avg_ideal_time', 'Avg_tps', 'Avg_rtps', 'Std_wtps', 'Avg_ldavg_1', 'Avg_kbmemused', 'Avg_num_cswch/s', 'std_num_cswch/s', 'OSSEC_alert', 'Login_attempt', 'File_activity', 'read_write_physical.process']
-    caracteritisticas_procesadas = ['is_syn_only_scaled', 'Avg_ideal_time_scaled', 'Avg_system_time_scaled', 'std_num_cswch/s_scaled', 'paket_rate_scaled', 'Avg_num_cswch/s_scaled', 'total_bytes_scaled', 'Protocol_tcp', 'Is_SYN_ACK_scaled', 'Std_user_time_scaled', 'Avg_nice_time_scaled', 'Std_system_time_scaled', 'read_write_physical.process_scaled', 'Avg_user_time_scaled', 'Avg_kbmemused_scaled', 'Duration_scaled', 'Protocol_udp', 'Service_coap', 'Service_dns', 'Avg_iowait_time_scaled', 'total_packet_scaled', 'Avg_tps_scaled', 'Service_http', 'Avg_ldavg_1_scaled', 'Std_nice_time_scaled', 'Service_websocket', 'OSSEC_alert_scaled', 'Avg_rtps_scaled', 'Service_mqtt', 'is_with_payload_scaled', 'anomaly_alert_scaled', 'File_activity_scaled', 'Login_attempt_scaled', 'Std_wtps_scaled']
+    # caracteritisticas_seleccionadas = ['Protocol', 'Service', 'Duration', 'Conn_state', 'is_syn_only', 'Is_SYN_ACK', 'is_with_payload', 'anomaly_alert', 'total_bytes', 'total_packet', 'paket_rate', 'Avg_user_time', 'Std_user_time', 'Avg_nice_time', 'Std_nice_time', 'Avg_system_time', 'Std_system_time', 'Avg_iowait_time', 'Avg_ideal_time', 'Avg_tps', 'Avg_rtps', 'Std_wtps', 'Avg_ldavg_1', 'Avg_kbmemused', 'Avg_num_cswch/s', 'std_num_cswch/s', 'OSSEC_alert', 'Login_attempt', 'File_activity', 'read_write_physical.process']
+    # caracteritisticas_procesadas = ['is_syn_only_scaled', 'Avg_ideal_time_scaled', 'Avg_system_time_scaled', 'std_num_cswch/s_scaled', 'paket_rate_scaled', 'Avg_num_cswch/s_scaled', 'total_bytes_scaled', 'Protocol_tcp', 'Is_SYN_ACK_scaled', 'Std_user_time_scaled', 'Avg_nice_time_scaled', 'Std_system_time_scaled', 'read_write_physical.process_scaled', 'Avg_user_time_scaled', 'Avg_kbmemused_scaled', 'Duration_scaled', 'Protocol_udp', 'Service_coap', 'Service_dns', 'Avg_iowait_time_scaled', 'total_packet_scaled', 'Avg_tps_scaled', 'Service_http', 'Avg_ldavg_1_scaled', 'Std_nice_time_scaled', 'Service_websocket', 'OSSEC_alert_scaled', 'Avg_rtps_scaled', 'Service_mqtt', 'is_with_payload_scaled', 'anomaly_alert_scaled', 'File_activity_scaled', 'Login_attempt_scaled', 'Std_wtps_scaled']
     
     
     # Eleccion del modelo ###################################################################
@@ -162,14 +162,16 @@ def main():
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
     model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
-    model_class2 = algorithms['LogisticRegression']() # Poner semilla a los que la necesiten
-    model_class1 = algorithms['LogisticRegression']() # Poner semilla a los que la necesiten
+    model_class2 = algorithms['DecisionTreeClassifier'](random_state=random_state, min_samples_leaf=5) # Poner semilla a los que la necesiten
+    model_class2_calibrated = algorithms['CalibratedClassifierCV'](model_class2, method='isotonic', cv=3)
+    model_class1 = algorithms['DecisionTreeClassifier'](random_state=random_state, min_samples_leaf=5) # Poner semilla a los que la necesiten
+    model_class1_calibrated = algorithms['CalibratedClassifierCV'](model_class1, method='isotonic', cv=3)
     
     
     # Entrenamiento #########################################################################
     
     grid = False
-    grid_n_iter = 10
+    grid_n_iter = 13
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
@@ -181,8 +183,8 @@ def main():
                         grid_n_iter,
                         random_grid,
                         ensemble,
-                        model_class2,
-                        model_class1
+                        model_class2_calibrated,
+                        model_class1_calibrated
     )
         
     # Guardar modelo #######################################################################
