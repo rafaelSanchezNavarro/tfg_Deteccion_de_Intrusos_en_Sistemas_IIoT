@@ -3,7 +3,7 @@ from sklearn.metrics import roc_auc_score
 
 # Cargar los dos CSV en DataFrames
 csv1 = pd.read_csv('predicciones/real.csv', header=None)
-csv2 = pd.read_csv('predicciones/op2.csv', header=None)
+csv2 = pd.read_csv('predicciones/op3.csv', header=None)
 
 # # Asegurar que ambos DataFrames tengan el mismo número de filas
 # min_filas = min(len(csv1), len(csv2))
