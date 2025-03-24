@@ -244,7 +244,7 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
 
         model_clonado = clone(model)
-        model_clonado.set_params(class_weight=class_weights)
+        # model_clonado.set_params(class_weight=class_weights)
         pipeline = create_pipeline(
             model=model_clonado,
             categorical_features=categorical_cols,  # Columnas categóricas
@@ -265,7 +265,7 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
         accuracy = accuracy_score(y_val_class1, y_pred_class1)
         print(f'📈 Accuracy (validacion): {accuracy:.4f}')
     
-        pipeline_tipos["RDOS"] = pipeline
+        pipeline_tipos[model_clonado.__class__.__name__] = pipeline
         
             
         return pipeline_tipos, y_pred_class1
@@ -288,23 +288,12 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, e
     y_train_class1 = datos["y_train_class1"]
     y_val_class1 = datos["y_val_class1"]
     
-    predicciones = []
     # Entrenar el modelo
     pipeline_class3, accuracy, precision, recall, f1, roc, y_pred_class3 = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
-    predicciones.append(y_pred_class3)
     pipeline_class2, y_pred_class2 = clasificacion_multiclase_categoria(random_state, model_class2, X_train, X_val, y_train_class3, y_train_class2 , y_val_class2, y_pred_class3)
-    predicciones.append(y_pred_class2)
     pipelines_class1, y_pred_class1_cat = clasificacion_multiclase_tipo(random_state, model_class1, X_train, X_val, y_train_class3, y_train_class1 , y_val_class1, y_pred_class3, y_pred_class2, y_train_class2 , y_val_class2)
-    predicciones.append(y_pred_class1_cat)
     print("🎯 Entrenamiento finalizado")
     
-    
-    # Suponiendo que predicciones es una lista de arrays
-    predicciones_df = pd.DataFrame(predicciones).T  # Transponer para tener las predicciones como filas
-    predicciones_df.columns = ['y_pred_class3', 'y_pred_class2', 'y_pred_class1_cat']  # Nombra las columnas si lo deseas
-
-    # Guardar el DataFrame en un archivo CSV
-    predicciones_df.to_csv('predicciones.csv', index=False)
     
     pipeline_class3 = pipeline_class3.named_steps['model']
     pipeline_class2 = pipeline_class2.named_steps['model']

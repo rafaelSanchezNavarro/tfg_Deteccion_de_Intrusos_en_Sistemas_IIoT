@@ -1,7 +1,7 @@
 import os
 import joblib
 from scripts.explicabilidad import explicabilidad
-from scripts.test import test
+from scripts.test import test_opcion3
 
 path = "DecisionTreeClassifier_0.9944"
 model = os.path.join("modelos", path, f"{path}.pkl")
@@ -21,5 +21,5 @@ for categoria in categorias:
     except:
         pass
 
-test.main(model, path, model_class2, models_class1)
+test_opcion3.main(model, path, model_class2, models_class1)
 explicabilidad.main(model, path)

@@ -212,49 +212,12 @@ def main(random_state):
     # KMEANS
     ###################################################################
     
-    
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    from sklearn.decomposition import PCA
-    from sklearn.cluster import KMeans
-    from sklearn.metrics import adjusted_rand_score, silhouette_score
+    # Reducción del conjunto de datos
+    X_train = X_train[:100000]
+    y_train_class2 = y_train_class2[:100000]
 
-    # Determinamos el número óptimo de clusters con el método del codo y la silhouette score
-    # Calcular la inercia (suma de distancias cuadradas a los centroides)
-    inertia = []
-    silhouette_scores = []
-    range_n_clusters = range(2, 21)  # Rango de posibles números de clusters
-
-    for n_clusters in range_n_clusters:
-        kmeans = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=500, n_init=50, random_state=42)
-        kmeans.fit(X_train)
-        inertia.append(kmeans.inertia_)
-        silhouette_scores.append(silhouette_score(X_train, kmeans.labels_))
-
-    # Graficar el método del codo
-    plt.figure(figsize=(10, 5))
-    plt.subplot(1, 2, 1)
-    plt.plot(range_n_clusters, inertia, marker='o', color='b')
-    plt.title("Método del Codo")
-    plt.xlabel("Número de Clusters")
-    plt.ylabel("Inercia (Suma de Distancias Cuadradas)")
-
-    # Graficar la Silhouette Score
-    plt.subplot(1, 2, 2)
-    plt.plot(range_n_clusters, silhouette_scores, marker='o', color='g')
-    plt.title("Silhouette Score")
-    plt.xlabel("Número de Clusters")
-    plt.ylabel("Silhouette Score")
-
-    plt.tight_layout()
-    plt.show()
-
-    # Seleccionar el número de clusters que tiene el mayor silhouette score (o usar el codo)
-    optimal_n_clusters = range_n_clusters[silhouette_scores.index(max(silhouette_scores))]
-    print(f"El número óptimo de clusters es: {optimal_n_clusters}")
-
-    # Entrenar el modelo con el número óptimo de clusters
-    kmeans = KMeans(n_clusters=optimal_n_clusters, init='k-means++', max_iter=500, n_init=50, random_state=42)
+    # Entrenar K-Means
+    kmeans = KMeans(n_clusters=10, init='k-means++', max_iter=500, n_init=50, random_state=42)
     clusters = kmeans.fit_predict(X_train)
 
     # Reducir a 2D con PCA
@@ -265,17 +228,40 @@ def main(random_state):
     ari = adjusted_rand_score(y_train_class2, clusters)
     print(f"ARI: {ari}")
 
-    # Graficar los clusters con el número óptimo de clusters
-    plt.figure(figsize=(12, 8))
-    sns.scatterplot(x=X_pca[:, 0], y=X_pca[:, 1], hue=clusters, palette="tab20", alpha=0.6, s=100)
-    plt.title(f"Clusters de K-Means (ARI: {ari:.2f})")
-    plt.xlabel("Componente Principal 1")
-    plt.ylabel("Componente Principal 2")
-    plt.legend(title="Cluster", bbox_to_anchor=(1.05, 1), loc='upper left')
+    # Crear subgráficos
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    from sklearn.preprocessing import LabelEncoder
+    import numpy as np
+
+    # Codificar las etiquetas de clase a números
+    label_encoder = LabelEncoder()
+    y_train_class2_encoded = label_encoder.fit_transform(y_train_class2)
+
+    # Obtener la clase mayoritaria para cada cluster
+    labels = np.zeros_like(clusters)
+    for i in range(10):  # Suponiendo que tienes 10 clusters
+        mask = (clusters == i)
+        majority_class = np.unique(y_train_class2_encoded[mask], return_counts=True)[0][0]
+        labels[mask] = majority_class
+
+    # Primer gráfico: Clusters de K-Means
+    sns.scatterplot(ax=axes[0], x=X_pca[:, 0], y=X_pca[:, 1], hue=clusters, palette="tab20", alpha=0.6, s=100)
+    axes[0].set_title(f"Clusters de K-Means (ARI: {ari:.2f})")
+    axes[0].set_xlabel("Componente Principal 1")
+    axes[0].set_ylabel("Componente Principal 2")
+    axes[0].legend(title="Cluster", bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # Segundo gráfico: Etiquetas predichas por el cluster (correspondientes a las clases mayoritarias)
+    sns.scatterplot(ax=axes[1], x=X_pca[:, 0], y=X_pca[:, 1], hue=labels, palette="tab20", alpha=0.6, s=100)
+    axes[1].set_title("Etiquetas Predichas por K-Means")
+    axes[1].set_xlabel("Componente Principal 1")
+    axes[1].set_ylabel("Componente Principal 2")
+    axes[1].legend(title="Categoría", bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.tight_layout()
     plt.show()
 
 
-    
-    
 if __name__ == "__main__":
     main(random_state=42)

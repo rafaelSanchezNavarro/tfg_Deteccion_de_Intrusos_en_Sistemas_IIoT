@@ -259,8 +259,6 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
         
         class_names = np.unique(y_train_class2)
         for name in class_names:
-            if name == "Normal":
-                continue  
             indices_train_cat = np.where(y_train_class2 == name)[0]
             X_train_cat = X_train.iloc[indices_train_cat]
             y_train_class1_cat = y_train_class1[indices_train_cat]

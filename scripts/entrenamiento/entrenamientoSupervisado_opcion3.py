@@ -240,7 +240,7 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
             
         class_names_tipo = np.unique(y_train_class1)
         weights = compute_class_weight('balanced', classes=class_names_tipo, y=y_train_class1)
-        # class_weights = dict(zip(class_names_tipo, weights))
+        class_weights = dict(zip(class_names_tipo, weights))
         
         # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train.select_dtypes(include=['object']).columns
