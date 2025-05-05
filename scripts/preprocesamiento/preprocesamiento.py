@@ -3,6 +3,8 @@ import os
 import sys
 import shutil
 
+from scripts.preprocesamiento.graficas import prueba1, prueba2, prueba3, prueba4
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sklearn.model_selection import train_test_split
@@ -183,7 +185,10 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     X_train = fix_dtype(X_train)
     X_train = delete_ip_port(X_train)
     # X_train = outliers(X_train)  
-        
+    
+    # prueba1(X_train, y_train_class3)  # Llamar a la función de prueba
+    # prueba2(X_train, y_train_class3)  # Llamar a la función de prueba
+    
     y_train_class3 = y_train_class3.loc[X_train.index]
     y_train_class2 = y_train_class2.loc[X_train.index]
     y_train_class1 = y_train_class1.loc[X_train.index]
@@ -207,12 +212,15 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     sample_weight_train = X_train['Instancia_completa'].replace({1: 3, 0: 1})
     
     columnas_no_comprobar = [col for col in X_train.columns if col not in ['Timestamp', 'Date', 'Instancia_completa'] and X_train[col].dtypes != 'object']
+    # prueba4(X_train[columnas_no_comprobar], y_train_class3)  # Llamar a la función de prueba
     variables_con_varianza_cero = calculo_varianza(X_train[columnas_no_comprobar])
     X_train = X_train.drop(columns=variables_con_varianza_cero)
     X_val = X_val.drop(columns=variables_con_varianza_cero)
     
     X_train = X_train.drop(columns=['Timestamp', 'Date', 'Instancia_completa'], errors='ignore')
     X_val = X_val.drop(columns=['Timestamp', 'Date', 'Instancia_completa'], errors='ignore')
+    
+    # prueba3(X_train, y_train_class3)  # Llamar a la función de prueba
     
     alta_corr_pares = correlacion_pares(X_train, 0.97)
     X_train = X_train.drop(columns=alta_corr_pares)
@@ -224,8 +232,8 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     
     caracteritisticas_seleccionadas = X_train.columns.tolist()
     
-    X_train['Protocol'] = X_train['Protocol'].fillna("missing")
-    X_val['Protocol'] = X_val['Protocol'].fillna("missing")
+    # X_train['Protocol'] = X_train['Protocol'].fillna("missing")
+    # X_val['Protocol'] = X_val['Protocol'].fillna("missing")
 
     X_train_processed, X_val_processed = preprocesar_datos(X_train, X_val, imputador_cat, imputador_num, normalizacion, discretizador, decodificador)
     
@@ -234,12 +242,14 @@ def main(random_state, imputador_cat, imputador_num, normalizacion, discretizado
     elif reduccion_dimensionalidad == seleccionar_variables_rfe:
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, num_features=20)
     elif reduccion_dimensionalidad == seleccionar_variables_randomForest:
-        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, sample_weight_train)
+        X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, y_train_class3, sample_weight_train, num_features=20)
     elif reduccion_dimensionalidad == proyectar_tsne:
         X_train_processed, X_val_processed = reduccion_dimensionalidad(X_train_processed, X_val_processed, n_components=2, perplexity=300, max_iter=5000, sample_size=300000, random_state=random_state)
     
     caracteritisticas_procesadas = X_train_processed.columns.tolist()
     
+    # print(caracteritisticas_seleccionadas)
+    # print(caracteritisticas_procesadas)
     print(f"✅ Variables finales seleccionadas: {len(caracteritisticas_procesadas)}")
     print(f"🎯 Preprocesamiento finalizado: Train {X_train_processed.shape}, Val {X_val_processed.shape}")
     

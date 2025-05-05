@@ -5,17 +5,18 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import cross_val_score
 from sklearn.utils import compute_class_weight
+from scripts.anomalias import anomalias
+from scripts.entrenamiento.entrenamiento_utils.balanceo_pesos import obtener_pesos_suavizados
 from scripts.entrenamiento.entrenamiento_utils.grid import param_grid
 from scripts.entrenamiento.entrenamiento_utils.create_pipeline import create_pipeline
 from scripts.entrenamiento.entrenamiento_utils.optimize import optimize
 from modelos.diccionario_modelos import algorithms
 
 def cargar_datos():
-    """Carga todos los archivos procesados y los devuelve como DataFrames."""
+
     carpeta = r"datos/preprocesados"
     datos = {}
 
-    # Cargar X_train
     path_X_train = os.path.join(carpeta, "X_train.csv")
     try:
         datos["X_train"] = pd.read_csv(path_X_train, low_memory=False)
@@ -24,7 +25,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_X_train}.")
         return None
 
-    # Cargar X_val
     path_X_val = os.path.join(carpeta, "X_val.csv")
     try:
         datos["X_val"] = pd.read_csv(path_X_val, low_memory=False)
@@ -33,7 +33,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_X_val}.")
         return None
 
-    # Cargar y_train_class3
     path_y_train_class3 = os.path.join(carpeta, "y_train_class3.csv")
     try:
         datos["y_train_class3"] = pd.read_csv(path_y_train_class3, low_memory=False)
@@ -42,7 +41,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_y_train_class3}.")
         return None
 
-    # Cargar y_val_class3
     path_y_val_class3 = os.path.join(carpeta, "y_val_class3.csv")
     try:
         datos["y_val_class3"] = pd.read_csv(path_y_val_class3, low_memory=False)
@@ -51,7 +49,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_y_val_class3}.")
         return None
 
-    # Cargar y_train_class2
     path_y_train_class2 = os.path.join(carpeta, "y_train_class2.csv")
     try:
         datos["y_train_class2"] = pd.read_csv(path_y_train_class2, low_memory=False)
@@ -60,7 +57,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_y_train_class2}.")
         return None
 
-    # Cargar y_val_class2
     path_y_val_class2 = os.path.join(carpeta, "y_val_class2.csv")
     try:
         datos["y_val_class2"] = pd.read_csv(path_y_val_class2, low_memory=False)
@@ -69,7 +65,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_y_val_class2}.")
         return None
 
-    # Cargar y_train_class1
     path_y_train_class1 = os.path.join(carpeta, "y_train_class1.csv")
     try:
         datos["y_train_class1"] = pd.read_csv(path_y_train_class1, low_memory=False)
@@ -78,7 +73,6 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_y_train_class1}.")
         return None
 
-    # Cargar y_val_class1
     path_y_val_class1 = os.path.join(carpeta, "y_val_class1.csv")
     try:
         datos["y_val_class1"] = pd.read_csv(path_y_val_class1, low_memory=False)
@@ -89,15 +83,15 @@ def cargar_datos():
 
     return datos
 
-def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble):
-
-        y_train_class3 = y_train_class3.values.ravel()
-        y_val_class3 = y_val_class3.values.ravel()
+def clasificacion_multiclase_categoria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class2 , y_val_class2, ensemble):
         
-        # Identificar columnas categóricas, numéricas y booleanas
+        
+        y_train_class2 = y_train_class2.values.ravel()
+        y_val_class2 = y_val_class2.values.ravel()
+
         categorical_cols = X_train.select_dtypes(include=['object']).columns
         boolean_cols = X_train.select_dtypes(include=['bool']).columns
-        if boolean_cols.any():  # Si hay columnas booleanas
+        if boolean_cols.any():  
             X_train[boolean_cols] = X_train[boolean_cols].astype(float)
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
         
@@ -105,12 +99,6 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
             tree_model = model.estimators[0][1]
         
         if grid:
-            # X_train_sampled = X_train.sample(n=10000, random_state=random_state)
-            # y_train_class3_sampled  = y_train_class3.loc[X_train_sampled.index]
-            
-            # X_train = X_train.drop(index=X_train_sampled.index)
-            # y_train_class3 = y_train_class3.drop(index=X_train_sampled.index)
-            
             if ensemble:
                 grid_model = tree_model
             else:
@@ -121,14 +109,13 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
                 random_state=random_state,
                 estimator=grid_model,
                 X=X_train,
-                y=y_train_class3,
+                y=y_train_class2,
                 param_grid=param_grid[grid_model.__class__.__name__],
                 n_iter=grid_n_iter,
                 cv=validacion_grid,
                 scoring='accuracy',
                 n_jobs=-1,
             )
-            
             grid_model = grid_search[0].best_estimator_
             print(f"➡️  Optimización completa para {grid_model.__class__.__name__}.")
 
@@ -136,94 +123,41 @@ def clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_ite
                 model.estimators[0] = ('mwbp', grid_model)
             else:
                 model = grid_model
-            
-        print("➡️  Creando el pipeline...")
-        pipeline = create_pipeline(
-            model=model,  
-            categorical_features=categorical_cols,  # Columnas categóricas
-            numerical_features=numerical_cols,  # Columnas numéricas
-        )
-        print("➡️  Pipeline creado exitosamente.")
-        
-        # # Validación cruzada de 5 pliegues
-        # print("➡️  Realizando validación cruzada de 5 pliegues...")
-        # cv_scores = cross_val_score(pipeline, X_train, y_train_class3, cv=5, scoring='accuracy')
-        # print("📈 CV scores:", cv_scores)
-        # print("📈 Accuracy media (CV): {:.4f}".format(cv_scores.mean()))
-        
-        print("➡️  Entrenando el pipeline...")
-        pipeline.fit(X_train, y_train_class3)
-        print("➡️  Entrenamiento completo.")
-
-        print("➡️  Realizando predicciones en el conjunto de validación...")
-        y_pred_class3 = pipeline.predict(X_val)
-        print("➡️  Predicciones realizadas.")
-
-        accuracy = accuracy_score(y_val_class3, y_pred_class3)
-        print(f'📈 Accuracy (validacion): {accuracy:.4f}')
-        
-        precision = precision_score(y_val_class3, y_pred_class3)
-        print(f'📈 Precision (validacion): {precision:.4f}')
-        
-        recall = recall_score(y_val_class3, y_pred_class3)
-        print(f'📈 Recall (validacion): {recall:.4f}')
-        
-        f1 = f1_score(y_val_class3, y_pred_class3)
-        print(f'📈 F1 (validacion): {f1:.4f}')
-        
-        roc = roc_auc_score(y_val_class3, y_pred_class3)
-        print(f'📈 ROC (validacion): {roc:.4f}')
-        
-        return pipeline, accuracy, precision, recall, f1, roc, y_pred_class3
-
-def clasificacion_multiclase_categoria(random_state, model, X_train, X_val, y_train_class3, y_train_class2 , y_val_class2, y_pred_class3):
-        
-        
-        y_train_class2 = y_train_class2.values.ravel()
-        
-        y_val_class2 = y_val_class2.values.ravel()
-        
-        
-        class_names = np.unique(y_train_class2)
-        
-        weights = compute_class_weight('balanced', classes=class_names, y=y_train_class2)
-        class_weights = dict(zip(class_names, weights))
-
-        # Identificar columnas categóricas, numéricas y booleanas
-        categorical_cols = X_train.select_dtypes(include=['object']).columns
-        boolean_cols = X_train.select_dtypes(include=['bool']).columns
-        if boolean_cols.any():  # Si hay columnas booleanas
-            X_train[boolean_cols] = X_train[boolean_cols].astype(int)
-        numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
+                
+        pesos = compute_class_weight('balanced', classes=np.array(list(anomalias.keys()) + ["Normal"]), y=y_train_class2)
+        pesos_categorias = dict(zip(list(anomalias.keys()), pesos))
+        # pesos_categorias = obtener_pesos_suavizados(y_train_class2)
         
         print("➡️  Creando el pipeline multiclase tipo...")
-        # model.set_params(class_weight=class_weights)
+        model.set_params(class_weight=pesos_categorias)
         pipeline = create_pipeline(
-            model=model,  # Modelo del algoritmo final (ensemble)
-            categorical_features=categorical_cols,  # Columnas categóricas
-            numerical_features=numerical_cols,  # Columnas numéricas
+            model=model,  
+            categorical_features=categorical_cols,  
+            numerical_features=numerical_cols,  
         )
         print("➡️  Pipeline multiclase tipo creado exitosamente.")
         
-        # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
         print("➡️  Entrenando el pipeline multiclase tipo...")
         pipeline.fit(X_train, y_train_class2)
         print("➡️  Entrenamiento completo.")
-
-
-        # Realizar predicciones
         print("➡️  Realizando predicciones en el conjunto de validación...")
         y_pred_class2 = pipeline.predict(X_val)
         print("➡️  Predicciones realizadas.")
-
-
-        # Evaluar el rendimiento
+        
         accuracy = accuracy_score(y_val_class2, y_pred_class2)
         print(f'📈 Accuracy (validacion): {accuracy:.4f}')
+        precision = precision_score(y_val_class2, y_pred_class2, average='macro', zero_division=0)
+        print(f'📈 Precision (validacion): {precision:.4f}')
+        recall = recall_score(y_val_class2, y_pred_class2, average='macro')
+        print(f'📈 Recall (validacion): {recall:.4f}')
+        f1 = f1_score(y_val_class2, y_pred_class2, average='macro')
+        print(f'📈 F1 (validacion): {f1:.4f}')
+        y_pred_proba = pipeline.predict_proba(X_val)  
+        roc = roc_auc_score(y_val_class2, y_pred_proba, multi_class='ovr', average='macro')
         
-        return pipeline, y_pred_class2
+        return pipeline, y_pred_class2, accuracy, precision, recall, f1, roc
 
-def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_class3, y_train_class1 , y_val_class1, y_pred_class3, y_pred_class2, y_train_class2 , y_val_class2):
+def clasificacion_multiclase_tipo(model, X_train, X_val, y_train_class1 , y_val_class1, y_pred_class2, y_train_class2 , y_val_class2):
         
         pipeline_tipos = {}
         
@@ -232,86 +166,79 @@ def clasificacion_multiclase_tipo(random_state, model, X_train, X_val, y_train_c
         y_train_class1 = y_train_class1.iloc[indices_train].values.ravel()
         y_train_class2 = y_train_class2.iloc[indices_train].values.ravel()
         
-        # Filtrar los datos de validación
         indices_val = np.where(y_pred_class2 != "Normal")[0]
         X_val = X_val.iloc[indices_val]
         y_val_class1 = y_val_class1.iloc[indices_val].values.ravel()
         y_val_class2 = y_val_class2.iloc[indices_val].values.ravel()
             
-        class_names_tipo = np.unique(y_train_class1)
-        weights = compute_class_weight('balanced', classes=class_names_tipo, y=y_train_class1)
-        class_weights = dict(zip(class_names_tipo, weights))
+        tipos = [tipo for tipos_lista in anomalias.values() for tipo in tipos_lista]
+
+        pesos = compute_class_weight('balanced', classes= np.array(tipos), y=y_train_class1)
+        pesos_tipos = dict(zip(tipos, pesos))
+        # pesos_tipos = obtener_pesos_suavizados(y_train_class1)
         
-        # Identificar columnas categóricas, numéricas y booleanas
         categorical_cols = X_train.select_dtypes(include=['object']).columns
         boolean_cols = X_train.select_dtypes(include=['bool']).columns
-        if boolean_cols.any():  # Si hay columnas booleanas
+        if boolean_cols.any():  
             X_train[boolean_cols] = X_train[boolean_cols].astype(int)
         numerical_cols = X_train.select_dtypes(include=['float64', 'int64']).columns
         
+        indices_anomalias = np.where(y_pred_class2 != "Normal")[0]
+        y_pred_class2 = y_pred_class2[indices_anomalias]
         
-        class_names = np.unique(y_train_class2)
-        for name in class_names:
-            if name == "Normal":
-                continue  
-            indices_train_cat = np.where(y_train_class2 == name)[0]
-            X_train_cat = X_train.iloc[indices_train_cat]
-            y_train_class1_cat = y_train_class1[indices_train_cat]
+        categorias_multiples_tipos = [key for key, value in anomalias.items() if len(value) > 1]
+        
+        for categoria in list(anomalias.keys()):
+
+            indices_train_categoria = np.where(y_train_class2 == categoria)[0]
+            X_train_categoria = X_train.iloc[indices_train_categoria]
+            y_train_class1_categoria = y_train_class1[indices_train_categoria]
             
-            if np.unique(y_train_class1_cat).size == 1:
-                continue   
-                        
-            # Filtrar los índices donde la predicción no es "Normal"
-            indices_filtrados = np.where(y_pred_class2 != "Normal")[0]
-
-            # Aplicar el filtro a y_pred_class2
-            y_pred_class2_filtrado = y_pred_class2[indices_filtrados]
-
-            # Obtener los índices donde la predicción es igual a name después del filtrado
-            indices_val_cat = np.where(y_pred_class2_filtrado == name)[0]           
+            if categoria not in categorias_multiples_tipos:
+                continue 
             
-            X_val_cat = X_val.iloc[indices_val_cat]
-            y_val_class1_cat = y_val_class1[indices_val_cat]
+            indices_anomalia_prediccion_categoria = np.where(y_pred_class2 == categoria)[0]           
+            X_val_tipos = X_val.iloc[indices_anomalia_prediccion_categoria]
+            y_val_class1_tipos = y_val_class1[indices_anomalia_prediccion_categoria]
 
-            model_clonado = clone(model)
-            # model_clonado.set_params(class_weight=class_weights)
-            model_clonado.set_params()
+            modelo_categoria = clone(model)
+            modelo_categoria.set_params(class_weight=pesos_tipos)
             pipeline = create_pipeline(
-                model=model_clonado,
-                categorical_features=categorical_cols,  # Columnas categóricas
-                numerical_features=numerical_cols,  # Columnas numéricas
+                model=modelo_categoria,
+                categorical_features=categorical_cols,  
+                numerical_features=numerical_cols,  
             )
             
-            # Entrenar el pipeline completo (incluyendo preprocesamiento y RFE)
-            print(f"➡️  Entrenando el pipeline multiclase tipo: {name}...")
-            pipeline.fit(X_train_cat, y_train_class1_cat)
-
-
-            # Realizar predicciones
+            print(f"➡️  Entrenando el pipeline multiclase tipo: {categoria}...")
+            pipeline.fit(X_train_categoria, y_train_class1_categoria)
             print("➡️  Realizando predicciones en el conjunto de validación...")
-            y_pred_class1_cat = pipeline.predict(X_val_cat)
+            y_pred_class1 = pipeline.predict(X_val_tipos)
             print("➡️  Predicciones realizadas.")
 
-
-            # Evaluar el rendimiento
-            accuracy = accuracy_score(y_val_class1_cat, y_pred_class1_cat)
+            indices_anomalias_reales = np.where(np.isin(y_val_class1_tipos, anomalias.get(categoria, [])))[0]
+            y_val_class1_categoria_reales = y_val_class1_tipos[indices_anomalias_reales]
+            y_pred_class1_tipos_reales = y_pred_class1[indices_anomalias_reales]
+            
+            accuracy = accuracy_score(y_val_class1_categoria_reales, y_pred_class1_tipos_reales)
             print(f'📈 Accuracy (validacion): {accuracy:.4f}')
+            precision = precision_score(y_val_class1_categoria_reales, y_pred_class1_tipos_reales, average='macro', zero_division=0)
+            print(f'📈 Precision (validacion): {precision:.4f}')
+            recall = recall_score(y_val_class1_categoria_reales, y_pred_class1_tipos_reales, average='macro')
+            print(f'📈 Recall (validacion): {recall:.4f}')
+            f1 = f1_score(y_val_class1_categoria_reales, y_pred_class1_tipos_reales, average='macro')
+            print(f'📈 F1 (validacion): {f1:.4f}')
         
-            pipeline_tipos[name] = pipeline
+            pipeline_tipos[categoria] = pipeline
             
         return pipeline_tipos
         
 def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, ensemble, model_class2, model_class1):  
     print("🚀 Iniciando entrenamiento...")
     
-    # Cargar todos los archivos de datos preprocesados
     datos = cargar_datos()
 
     X_train = datos["X_train"]
     X_val = datos["X_val"]
-
-    y_train_class3 = datos["y_train_class3"]
-    y_val_class3 = datos["y_val_class3"]
     
     y_train_class2 = datos["y_train_class2"]
     y_val_class2 = datos["y_val_class2"]
@@ -319,14 +246,11 @@ def main(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, e
     y_train_class1 = datos["y_train_class1"]
     y_val_class1 = datos["y_val_class1"]
     
-    # Entrenar el modelo
-    pipeline_class3, accuracy, precision, recall, f1, roc, y_pred_class3 = clasificacion_binaria(random_state, model, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class3, y_val_class3, ensemble)
-    pipeline_class2, y_pred_class2 = clasificacion_multiclase_categoria(random_state, model_class2, X_train, X_val, y_train_class3, y_train_class2 , y_val_class2, y_pred_class3)
-    pipelines_class1 = clasificacion_multiclase_tipo(random_state, model_class1, X_train, X_val, y_train_class3, y_train_class1 , y_val_class1, y_pred_class3, y_pred_class2, y_train_class2 , y_val_class2)
+    pipeline_class2, y_pred_class2, accuracy, precision, recall, f1, roc = clasificacion_multiclase_categoria(random_state, model_class2, grid, validacion_grid, grid_n_iter, random_grid, X_train, X_val, y_train_class2 , y_val_class2, ensemble)
+    pipelines_class1 = clasificacion_multiclase_tipo(model_class1, X_train, X_val, y_train_class1 , y_val_class1, y_pred_class2, y_train_class2 , y_val_class2)
     
     print("🎯 Entrenamiento finalizado")
     
-    pipeline_class3 = pipeline_class3.named_steps['model']
     pipeline_class2 = pipeline_class2.named_steps['model']
     
-    return pipeline_class3, accuracy, precision, recall, f1, roc, pipeline_class2, pipelines_class1
+    return pipeline_class2, accuracy, precision, recall, f1, roc, None, pipelines_class1

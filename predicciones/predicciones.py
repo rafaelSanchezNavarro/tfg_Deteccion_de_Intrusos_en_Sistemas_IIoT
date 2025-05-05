@@ -1,68 +1,98 @@
 import pandas as pd
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 ###################################################################
 # SUPERVISADO
-###################################################################
+##################################################################
 
-# Cargar los dos CSV en DataFrames
-csv1 = pd.read_csv('predicciones/real.csv', header=None)
-csv2 = pd.read_csv('predicciones/arq3.csv', header=None)
+anomalias = {
+    "Reconnaissance": [
+        "Generic_scanning",
+        "Scanning_vulnerability",
+        "fuzzing",
+        "Discovering_resources"
+    ],
+    "Weaponization": [
+        "BruteForce",
+        "Dictionary",
+        "insider_malcious"
+    ],
+    "Exploitation": [
+        "Reverse_shell",
+        "MitM"
+    ],
+    "Lateral _movement": [
+        "MQTT_cloud_broker_subscription",
+        "Modbus_register_reading",
+        "TCP Relay"
+    ],
+    "C&C": [
+        "C&C"
+    ],
+    "Exfiltration": [
+        "Exfiltration"
+    ],
+    "Tampering": [
+        "False_data_injection",
+        "Fake_notification"
+    ],
+    "crypto-ransomware": [
+        "crypto-ransomware"
+    ],
+    "RDOS": [
+        "RDOS"
+    ],
+    "Normal": [
+        "Normal"
+    ]
+} 
 
-# # Asegurar que ambos DataFrames tengan el mismo número de filas
+# Diccionario tipo → categoría
+tipo_a_categoria = {}
+for categoria, tipos in anomalias.items():
+    for tipo in tipos:
+        tipo_a_categoria[tipo] = categoria
+        
+# csv1 = pd.read_csv('predicciones/real.csv', header=None)
+# csv2 = pd.read_csv('predicciones/pruebas arquitecturas/arq1b.csv', header=None)
 # min_filas = min(len(csv1), len(csv2))
-# csv1, csv2 = csv1.iloc[:min_filas, :3], csv2.iloc[:min_filas, :3]
+# csv1, csv2 = csv1.iloc[:min_filas, 2], csv2.iloc[:min_filas, 2]
+# # csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
+# # csv2 = csv2.map(lambda x: tipo_a_categoria.get(x, x))  # <- ahora sí
+# accuracy = accuracy_score(csv1, csv2)
+# print(f'📈 Accuracy (test): {accuracy:.4f}')
+# precision = precision_score(csv1, csv2, average='macro', zero_division=0)
+# print(f'📈 Precision (test): {precision:.4f}')
+# recall = recall_score(csv1, csv2, average='macro')
+# print(f'📈 Recall (test): {recall:.4f}')
+# f1 = f1_score(csv1, csv2, average='macro')
+# print(f'📈 F1 (test): {f1:.4f}')
 
-# # Comparar filas completas (primeras 3 columnas)
-# diferencias = (csv1 != csv2).any(axis=1)
 
-# # Obtener los índices de las filas diferentes
-# indices_filas_diferentes = csv1.index[diferencias].tolist()
 
-# Asegurar que ambos DataFrames tengan el mismo número de filas y seleccionar las tres primeras columnas
+
+csv1 = pd.read_csv('predicciones/real.csv', header=None)
+csv2 = pd.read_csv('predicciones/pruebas arq2b/GRU.csv', header=None)
 min_filas = min(len(csv1), len(csv2))
-y_real_ataque, y_real_categoria, y_real_tipo = csv1.iloc[:min_filas, 0], csv1.iloc[:min_filas, 1], csv1.iloc[:min_filas, 2]
-y_pred_ataque, y_pred_categoria, y_pred_tipo = csv2.iloc[:min_filas, 0], csv2.iloc[:min_filas, 1], csv2.iloc[:min_filas, 2]
+csv1, csv2 = csv1.iloc[:min_filas, 1], csv2.iloc[:min_filas, 0]
+# csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
+csv2 = csv2.map(lambda x: tipo_a_categoria.get(x, x))  # <- ahora sí
+accuracy = accuracy_score(csv1, csv2)
+print(f'📈 Accuracy (test): {accuracy:.4f}')
+precision = precision_score(csv1, csv2, average='macro', zero_division=0)
+print(f'📈 Precision (test): {precision:.4f}')
+recall = recall_score(csv1, csv2, average='macro')
+print(f'📈 Recall (test): {recall:.4f}')
+f1 = f1_score(csv1, csv2, average='macro')
+print(f'📈 F1 (test): {f1:.4f}')
 
-# Filtrar solo las filas donde el ataque (columna 0) es 1
-ataque_filas = (y_real_ataque == 1)
-
-# Definir casos en la matriz de confusión
-TP = ((y_real_ataque == 1) & (y_pred_ataque == 1) & (y_real_categoria == y_pred_categoria) & (y_real_tipo == y_pred_tipo)).sum()  # Todo correcto
-FP = ((y_real_ataque == 0) & (y_pred_ataque == 1)).sum()  # Falsos positivos en ataque
-FN = ((y_real_ataque == 1) & (y_pred_ataque == 0)).sum()  # Falsos negativos en ataque
-TN = ((y_real_ataque == 0) & (y_pred_ataque == 0)).sum()  # Verdaderos negativos
-
-# Casos donde el ataque es correcto, pero hay errores en categoría o tipo
-error_categoria = ((y_real_ataque == 1) & (y_pred_ataque == 1) & (y_real_categoria != y_pred_categoria)).sum()
-error_tipo = ((y_real_ataque == 1) & (y_pred_ataque == 1) & (y_real_categoria == y_pred_categoria) & (y_real_tipo != y_pred_tipo)).sum()
-
-# Imprimir resultados
-print("Matriz de confusión extendida:")
-print(f"TP: {TP}")
-print(f"FP: {FP}")
-print(f"FN: {FN}")
-print(f"TN: {TN}")
-print(f"Errores en Categoría cuando el ataque es correcto: {error_categoria}")
-print(f"Errores en Tipo cuando el ataque y la categoría son correctos: {error_tipo}")
-
-# Ajustar TP y FP considerando errores en categoría y tipo
-TP_corrected = TP - error_categoria - error_tipo  # Restamos los errores dentro de TP
-FP_corrected = FP + error_categoria + error_tipo  # Sumamos los errores dentro de FP
-
-# Recalcular métricas
-accuracy = (TP_corrected + TN) / (TP_corrected + FP_corrected + FN + TN)
-precision = TP_corrected / (TP_corrected + FP_corrected)
-recall = TP_corrected / (TP_corrected + FN)
-f1 = 2 * (precision * recall) / (precision + recall)
-
-# Imprimir nuevas métricas
-print(f"Accuracy corregido: {accuracy:.4f}")
-print(f"Precision corregida: {precision:.4f}")
-print(f"Recall corregido: {recall:.4f}")
-print(f"F1-Score corregido: {f1:.4f}")
-
-
+labels = sorted(set(csv1))
+label_names = [str(label) for label in labels]  
+cm = confusion_matrix(csv1, csv2)
+cm_df = pd.DataFrame(cm, index=[f'{label}' for label in label_names], columns=[f'{label}' for label in label_names])
+print(cm_df)
+class_df = classification_report(csv1, csv2, target_names=label_names, digits=4)
+print(class_df)
 
 
 ###################################################################

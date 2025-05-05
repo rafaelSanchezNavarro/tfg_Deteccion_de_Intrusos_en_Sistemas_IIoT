@@ -90,7 +90,7 @@ def seleccionar_variables_rfe(X_train, X_val, y_train, num_features):
     modelo_rf = DecisionTreeClassifier(random_state=42)
 
     # Aplicar RFE para seleccionar las 20 mejores características
-    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=10)
+    rfe = RFE(estimator=modelo_rf, n_features_to_select=num_features, step=3)
     X_train_rfe = rfe.fit_transform(X_train, y_train)
     X_val_rfe = rfe.transform(X_val)
 
@@ -136,7 +136,7 @@ def graficar_rf_importancia(feature_importances):
     # Mostrar gráfico
     plt.show()
 
-def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_train):
+def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_train, num_features):
     # Entrenar el modelo RandomForest con los pesos
     rf = RandomForestClassifier(n_estimators=100, random_state=42)
     rf.fit(X_train, y_train, sample_weight=sample_weight_train)
@@ -147,7 +147,7 @@ def seleccionar_variables_randomForest(X_train, X_val, y_train, sample_weight_tr
         'Importance': rf.feature_importances_
     }).sort_values(by='Importance', ascending=False)
 
-    caracteristicas_imp_rf = feature_importances.head(150) # 50
+    caracteristicas_imp_rf = feature_importances.head(num_features) 
     caracteristicas_imp_rf = caracteristicas_imp_rf.Feature.to_list()
     # print(caracteristicas_imp_rf)
 

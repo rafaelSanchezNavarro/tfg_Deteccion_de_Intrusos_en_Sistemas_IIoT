@@ -1,8 +1,9 @@
 from sklearn.discriminant_analysis import StandardScaler
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 # Definir escaladores
 scalers = {
     "robust": RobustScaler(),
-    "standard": StandardScaler()
+    "standard": StandardScaler(),
+    "minmax": MinMaxScaler(),
 }
