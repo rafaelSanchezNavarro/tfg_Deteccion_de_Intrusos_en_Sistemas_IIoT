@@ -8,7 +8,6 @@ from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, classificati
 from scripts.anomalias import anomalias
 from scripts.preprocesamiento.limpieza import replace_common_values, fix_mayus
 from scripts.preprocesamiento.conversion import delete_ip_port, fix_dtype
-from scripts.test.evaluacion import evaluacion_arquitectura, evaluacion_tipo
 
 def cargar_datos(pre_path):
 

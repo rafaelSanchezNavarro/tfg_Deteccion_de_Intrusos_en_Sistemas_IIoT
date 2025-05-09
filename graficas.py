@@ -198,177 +198,181 @@
 
 
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.lines import Line2D
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# from matplotlib.lines import Line2D
 
-# Datos originales
-categorias = [
-    "RDOS", "Reconnaissance", "Weaponization", "Lateral _movement",
-    "Exfiltration", "Tampering", "C&C", "Exploitation", "crypto-ransomware"
-]
-valores = [98942, 89471, 47043, 22034, 15421, 3605, 1973, 788, 315]
-total = sum(valores)
+# # Datos originales
+# categorias = [
+#     "RDOS", "Reconnaissance", "Weaponization", "Lateral _movement",
+#     "Exfiltration", "Tampering", "C&C", "Exploitation", "crypto-ransomware"
+# ]
+# valores = [98942, 89471, 47043, 22034, 15421, 3605, 1973, 788, 315]
+# total = sum(valores)
 
-# Separar en categorías principales y menores (< 15,000)
-categorias_principales = []
-valores_principales = []
-categorias_menores = []
-valores_menores = []
+# # Separar en categorías principales y menores (< 15,000)
+# categorias_principales = []
+# valores_principales = []
+# categorias_menores = []
+# valores_menores = []
 
-for cat, val in zip(categorias, valores):
-    if val < 15000:
-        categorias_menores.append(cat)
-        valores_menores.append(val)
-    else:
-        categorias_principales.append(cat)
-        valores_principales.append(val)
+# for cat, val in zip(categorias, valores):
+#     if val < 15000:
+#         categorias_menores.append(cat)
+#         valores_menores.append(val)
+#     else:
+#         categorias_principales.append(cat)
+#         valores_principales.append(val)
 
-# Colores personalizados
-color_arch1 = '#D5E8D4'  # para menores
-color_arch2 = '#F8CECC'  # para principales
-colores_principales = [color_arch2] * len(categorias_principales)
-colores_menores = [color_arch1] * len(categorias_menores)
+# # Colores personalizados
+# color_arch1 = '#D5E8D4'  # para menores
+# color_arch2 = '#F8CECC'  # para principales
+# colores_principales = [color_arch2] * len(categorias_principales)
+# colores_menores = [color_arch1] * len(categorias_menores)
 
-# Crear figura principal
-fig, ax = plt.subplots(figsize=(10, 6))
+# # Crear figura principal
+# fig, ax = plt.subplots(figsize=(10, 6))
 
-# Gráfico de barras principales
-bars = ax.bar(categorias_principales, valores_principales, color=colores_principales, edgecolor='grey')
-ax.set_title("Distribución de categorías de ataques")
-ax.set_ylabel("Número de instancias")
-ax.set_xticks(range(len(categorias_principales)))
-ax.set_xticklabels(categorias_principales, rotation=45, ha='right')
+# # Gráfico de barras principales
+# bars = ax.bar(categorias_principales, valores_principales, color=colores_principales, edgecolor='grey')
+# ax.set_title("Distribución de categorías de ataques")
+# ax.set_ylabel("Número de instancias")
+# ax.set_xticks(range(len(categorias_principales)))
+# ax.set_xticklabels(categorias_principales, rotation=45, ha='right')
 
-# Añadir porcentaje en el centro de cada barra principal
-for bar, valor in zip(bars, valores_principales):
-    height = bar.get_height()
-    porcentaje = f"{(valor / total) * 100:.2f}%"
-    ax.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
-            ha='center', va='center', fontsize=9, color='black')
+# # Añadir porcentaje en el centro de cada barra principal
+# for bar, valor in zip(bars, valores_principales):
+#     height = bar.get_height()
+#     porcentaje = f"{(valor / total) * 100:.2f}%"
+#     ax.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
+#             ha='center', va='center', fontsize=9, color='black')
 
-# Subgráfico insertado para menores
-ax_inset = inset_axes(ax, width="45%", height="45%", loc='upper right')
-bars_inset = ax_inset.bar(categorias_menores, valores_menores, color=colores_menores, edgecolor='grey')
-ax_inset.set_xticks(range(len(categorias_menores)))
-ax_inset.set_xticklabels(categorias_menores, rotation=45, ha='right')
-ax_inset.tick_params(labelsize=8)
+# # Subgráfico insertado para menores
+# ax_inset = inset_axes(ax, width="45%", height="45%", loc='upper right')
+# bars_inset = ax_inset.bar(categorias_menores, valores_menores, color=colores_menores, edgecolor='grey')
+# ax_inset.set_xticks(range(len(categorias_menores)))
+# ax_inset.set_xticklabels(categorias_menores, rotation=45, ha='right')
+# ax_inset.tick_params(labelsize=8)
 
-# Añadir porcentaje en el centro de cada barra menor
-for bar, valor in zip(bars_inset, valores_menores):
-    height = bar.get_height()
-    porcentaje = f"{(valor / total) * 100:.2f}%"
-    ax_inset.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
-                  ha='center', va='center', fontsize=8, color='black')
+# # Añadir porcentaje en el centro de cada barra menor
+# for bar, valor in zip(bars_inset, valores_menores):
+#     height = bar.get_height()
+#     porcentaje = f"{(valor / total) * 100:.2f}%"
+#     ax_inset.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
+#                   ha='center', va='center', fontsize=8, color='black')
 
-# Leyenda personalizada
-legend_elements = [
-    Line2D([0], [0], marker='s', color='w', label='Categorías con mas de 15,000 instancias',
-           markerfacecolor=color_arch2, markeredgecolor='grey', markersize=10),
-    Line2D([0], [0], marker='s', color='w', label='Categorías con menos de 15,000 instancias',
-           markerfacecolor=color_arch1, markeredgecolor='grey', markersize=10)
-]
-ax.legend(handles=legend_elements, loc='lower left')
+# # Leyenda personalizada
+# legend_elements = [
+#     Line2D([0], [0], marker='s', color='w', label='Categorías con mas de 15,000 instancias',
+#            markerfacecolor=color_arch2, markeredgecolor='grey', markersize=10),
+#     Line2D([0], [0], marker='s', color='w', label='Categorías con menos de 15,000 instancias',
+#            markerfacecolor=color_arch1, markeredgecolor='grey', markersize=10)
+# ]
+# ax.legend(handles=legend_elements, loc='lower left')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.lines import Line2D
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# from matplotlib.lines import Line2D
 
-# Datos actualizados
-categorias = [
-    "RDOS", "Scanning_vulnerability", "Generic_scanning", "BruteForce",
-    "MQTT_cloud_broker_subscription", "Discovering_resources", "Exfiltration",
-    "insider_malcious", "Modbus_register_reading", "False_data_injection", "C&C",
-    "Dictionary", "TCP Relay", "fuzzing", "Reverse_shell",
-    "crypto-ransomware", "MitM", "Fake_notification"
-]
+# # Datos actualizados
+# categorias = [
+#     "RDOS", "Scanning_vulnerability", "Generic_scanning", "BruteForce",
+#     "MQTT_cloud_broker_subscription", "Discovering_resources", "Exfiltration",
+#     "insider_malcious", "Modbus_register_reading", "False_data_injection", "C&C",
+#     "Dictionary", "TCP Relay", "fuzzing", "Reverse_shell",
+#     "crypto-ransomware", "MitM", "Fake_notification"
+# ]
 
-valores = [
-    98942,   # RDOS
-    37070,   # Scanning_vulnerability
-    35185,   # Generic_scanning
-    33046,   # BruteForce
-    16456,   # MQTT_cloud_broker_subscription
-    16284,   # Discovering_resources
-    15421,   # Exfiltration
-    12184,   # insider_malcious
-     4130,   # Modbus_register_reading
-     3586,   # False_data_injection
-     1973,   # C&C
-     1813,   # Dictionary
-     1448,   # TCP Relay
-      932,   # fuzzing
-      701,   # Reverse_shell
-      315,   # crypto-ransomware
-       87,   # MitM
-       19    # Fake_notification
-]
+# valores = [
+#     98942,   # RDOS
+#     37070,   # Scanning_vulnerability
+#     35185,   # Generic_scanning
+#     33046,   # BruteForce
+#     16456,   # MQTT_cloud_broker_subscription
+#     16284,   # Discovering_resources
+#     15421,   # Exfiltration
+#     12184,   # insider_malcious
+#      4130,   # Modbus_register_reading
+#      3586,   # False_data_injection
+#      1973,   # C&C
+#      1813,   # Dictionary
+#      1448,   # TCP Relay
+#       932,   # fuzzing
+#       701,   # Reverse_shell
+#       315,   # crypto-ransomware
+#        87,   # MitM
+#        19    # Fake_notification
+# ]
 
-total = sum(valores)
+# total = sum(valores)
 
-# Separar en principales y menores (< 20,000)
-categorias_principales = []
-valores_principales = []
-categorias_menores = []
-valores_menores = []
+# # Separar en principales y menores (< 20,000)
+# categorias_principales = []
+# valores_principales = []
+# categorias_menores = []
+# valores_menores = []
 
-for cat, val in zip(categorias, valores):
-    if val < 3000:
-        categorias_menores.append(cat)
-        valores_menores.append(val)
-    else:
-        categorias_principales.append(cat)
-        valores_principales.append(val)
+# for cat, val in zip(categorias, valores):
+#     if val < 3000:
+#         categorias_menores.append(cat)
+#         valores_menores.append(val)
+#     else:
+#         categorias_principales.append(cat)
+#         valores_principales.append(val)
 
-# Colores personalizados
-color_arch1 = '#D5E8D4'  # para menores
-color_arch2 = '#F8CECC'  # para principales
-colores_principales = [color_arch2] * len(categorias_principales)
-colores_menores = [color_arch1] * len(categorias_menores)
+# # Colores personalizados
+# color_arch1 = '#D5E8D4'  # para menores
+# color_arch2 = '#F8CECC'  # para principales
+# colores_principales = [color_arch2] * len(categorias_principales)
+# colores_menores = [color_arch1] * len(categorias_menores)
 
-# Crear figura principal
-fig, ax = plt.subplots(figsize=(12, 7))
+# # Crear figura principal
+# fig, ax = plt.subplots(figsize=(12, 7))
 
-# Gráfico de barras principales
-bars = ax.bar(categorias_principales, valores_principales, color=colores_principales, edgecolor='grey')
-ax.set_title("Distribución de tipos de ataque")
-ax.set_ylabel("Número de instancias")
-ax.set_xticks(range(len(categorias_principales)))
-ax.set_xticklabels(categorias_principales, rotation=45, ha='right')
+# # Gráfico de barras principales
+# bars = ax.bar(categorias_principales, valores_principales, color=colores_principales, edgecolor='grey')
+# ax.set_title("Distribución de tipos de ataque")
+# ax.set_ylabel("Número de instancias")
+# ax.set_xticks(range(len(categorias_principales)))
+# ax.set_xticklabels(categorias_principales, rotation=45, ha='right')
 
-# Añadir porcentaje en el centro de cada barra principal
-for bar, valor in zip(bars, valores_principales):
-    height = bar.get_height()
-    porcentaje = f"{(valor / total) * 100:.2f}%"
-    ax.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
-            ha='center', va='center', fontsize=9, color='black')
+# # Añadir porcentaje en el centro de cada barra principal
+# for bar, valor in zip(bars, valores_principales):
+#     height = bar.get_height()
+#     porcentaje = f"{(valor / total) * 100:.2f}%"
+#     ax.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
+#             ha='center', va='center', fontsize=9, color='black')
 
-# Subgráfico insertado para menores
-ax_inset = inset_axes(ax, width="50%", height="50%", loc='upper right')
-bars_inset = ax_inset.bar(categorias_menores, valores_menores, color=colores_menores, edgecolor='grey')
-ax_inset.set_xticks(range(len(categorias_menores)))
-ax_inset.set_xticklabels(categorias_menores, rotation=45, ha='right')
-ax_inset.tick_params(labelsize=8)
+# # Subgráfico insertado para menores
+# ax_inset = inset_axes(ax, width="50%", height="50%", loc='upper right')
+# bars_inset = ax_inset.bar(categorias_menores, valores_menores, color=colores_menores, edgecolor='grey')
+# ax_inset.set_xticks(range(len(categorias_menores)))
+# ax_inset.set_xticklabels(categorias_menores, rotation=45, ha='right')
+# ax_inset.tick_params(labelsize=8)
 
-# Añadir porcentaje en el centro de cada barra menor
-for bar, valor in zip(bars_inset, valores_menores):
-    height = bar.get_height()
-    porcentaje = f"{(valor / total) * 100:.2f}%"
-    ax_inset.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
-                  ha='center', va='center', fontsize=8, color='black')
+# # Añadir porcentaje en el centro de cada barra menor
+# for bar, valor in zip(bars_inset, valores_menores):
+#     height = bar.get_height()
+#     porcentaje = f"{(valor / total) * 100:.2f}%"
+#     ax_inset.text(bar.get_x() + bar.get_width() / 2, height / 2, porcentaje,
+#                   ha='center', va='center', fontsize=8, color='black')
 
-# Leyenda personalizada
-legend_elements = [
-    Line2D([0], [0], marker='s', color='w', label='Categorías con mas de 3,000 instancias',
-           markerfacecolor=color_arch2, markeredgecolor='grey', markersize=10),
-    Line2D([0], [0], marker='s', color='w', label='Categorías con menos de 3,000 instancias',
-           markerfacecolor=color_arch1, markeredgecolor='grey', markersize=10)
-]
-ax.legend(handles=legend_elements, loc='lower left')
+# # Leyenda personalizada
+# legend_elements = [
+#     Line2D([0], [0], marker='s', color='w', label='Categorías con mas de 3,000 instancias',
+#            markerfacecolor=color_arch2, markeredgecolor='grey', markersize=10),
+#     Line2D([0], [0], marker='s', color='w', label='Categorías con menos de 3,000 instancias',
+#            markerfacecolor=color_arch1, markeredgecolor='grey', markersize=10)
+# ]
+# ax.legend(handles=legend_elements, loc='lower left')
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
+
+
+
+

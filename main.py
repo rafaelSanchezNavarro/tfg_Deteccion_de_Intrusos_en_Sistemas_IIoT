@@ -164,7 +164,7 @@ def main():
     
     # print(f"➡️  Ensemble configurado con los clasificadores: {[nombre for (nombre, _) in model.estimators]}\n")
     
-    model = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
+    model = algorithms['DecisionTreeClassifier'](random_state=random_state) # Poner semilla a los que la necesiten
     model_class2 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
     model_class2_calibrated = algorithms['CalibratedClassifierCV'](model_class2, method='isotonic', cv=3)
     model_class1 = algorithms['LogisticRegression'](random_state=random_state) # Poner semilla a los que la necesiten
@@ -178,7 +178,7 @@ def main():
     random_grid = True
     validacion_grid = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=random_state)
     
-    model_train, accuracy, precision, recall, f1, roc, model_train_class2, models_train_class1  = entrenamientoSupervisado_opcion1.main(
+    model_train, accuracy, precision, recall, f1, roc, model_train_class2, models_train_class1  = entrenamientoSupervisado_opcion2.main(
                         random_state,
                         model,
                         grid,

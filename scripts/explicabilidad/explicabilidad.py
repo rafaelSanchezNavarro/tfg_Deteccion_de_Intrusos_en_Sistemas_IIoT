@@ -1,9 +1,11 @@
 import io
 import os
+import numpy as np
 import pandas as pd
 from lime.lime_tabular import LimeTabularExplainer
 import shap
 import matplotlib.pyplot as plt
+from scripts.anomalias import anomalias
 
 
 def cargar_datos():
@@ -20,7 +22,7 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_X_train}.")
         return None
 
-    # Cargar X_val
+    # Cargar X_test
     path_X_test = os.path.join(carpeta, "X_test_preprocesado.csv")
     try:
         datos["X_test"] = pd.read_csv(path_X_test, low_memory=False)
@@ -29,18 +31,185 @@ def cargar_datos():
         print(f"❌ Error: No se encontró {path_X_test}.")
         return None
     
+    
+    # Cargar y_test_class1
+    path_y_test_class1 = os.path.join(carpeta, "y_test_class1.csv")
+    try:
+        datos["y_test_class1"] = pd.read_csv(path_y_test_class1, low_memory=False)
+        print(f"✅ y_test_class1 cargado: {datos['y_test_class1'].shape[0]} filas, {datos['y_test_class1'].shape[1]} columnas.")
+    except FileNotFoundError:
+        print(f"❌ Error: No se encontró {path_y_test_class1}.")
+        return None
+    
     return datos
  
-def guardar_exp(pre_path, exp, tipo):
+def guardar_exp(pre_path, exp, tipo, model_test=None, X_test=None, instancia=None):
+    import datetime
+
     # Definir la ruta base
     dir_path = os.path.join("modelos", pre_path)
-    os.makedirs(dir_path, exist_ok=True)  # 📌 Crear directorio si no existe
+    os.makedirs(dir_path, exist_ok=True)
 
     if tipo == "lime":
-        # Guardar la explicación en HTML
         path_html = os.path.join(dir_path, "lime_summary.html")
-        exp.save_to_file(path_html)
-        print(f"✅ Explicación LIME guardada en: {path_html}")
+        lime_html = exp.as_html()
+
+        fecha = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+        # Determinar si es ataque o no
+        es_ataque = None
+        if model_test and X_test is not None and instancia is not None:
+            clase_predicha = model_test.predict(X_test.iloc[[instancia]])[0]
+            es_ataque = clase_predicha != "Normal"
+
+
+        html_final = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Explicación LIME</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                :root {{
+                    --verde-claro: #D5E8D4;
+                    --rosado-claro: #F8CECC;
+                    --azul-claro: #DAE8FC;
+                    --gris-claro: #CCCCCC;
+                }}
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background-color: var(--verde-claro);
+                    color: #333;
+                }}
+                header {{
+                    background-color: var(--gris-claro);
+                    padding: 20px 40px;
+                    text-align: center;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                }}
+                header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                    color: #2F4F4F;
+                }}
+                header p {{
+                    margin: 5px 0 0;
+                    font-size: 14px;
+                }}
+                .container {{
+                    max-width: 1000px;
+                    margin: 40px auto;
+                    background-color: #fff;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }}
+                .section {{
+                    margin-bottom: 30px;
+                }}
+                .section h2 {{
+                    font-size: 20px;
+                    margin-bottom: 10px;
+                    color: #2F4F4F;
+                }}
+                .section p {{
+                    font-size: 15px;
+                    line-height: 1.6;
+                }}
+                .alert {{
+                    padding: 15px 20px;
+                    font-size: 15px;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    margin-top: 10px;
+                }}
+                .alert.ataque {{
+                    background-color: var(--rosado-claro);
+                    border-left: 6px solid #c62828;
+                    color: #c62828;
+                }}
+                .alert.normal {{
+                    background-color: var(--verde-claro);
+                    border-left: 6px solid #388E3C;
+                    color: #2E7D32;
+                }}
+                .lime-output {{
+                    margin-top: 20px;
+                }}
+                table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    font-size: 14px;
+                }}
+                th, td {{
+                    text-align: left;
+                    padding: 10px;
+                    border: 1px solid #ccc;
+                }}
+                th {{
+                    background-color: var(--gris-claro);
+                }}
+                tr:nth-child(even) {{
+                    background-color: var(--azul-claro);
+                }}
+                tr:nth-child(odd) {{
+                    background-color: var(--gris-claro);
+                }}
+                .footer {{
+                    text-align: center;
+                    margin: 40px 0 10px;
+                    font-size: 12px;
+                    color: #888;
+                }}
+                @media (max-width: 768px) {{
+                    .container {{
+                        margin: 20px;
+                        padding: 20px;
+                    }}
+                    header h1 {{
+                        font-size: 22px;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <header>
+                <h1>📊 Explicación de Modelo con LIME</h1>
+                <p>Generado el {fecha}</p>
+            </header>
+
+            <div class="container">
+                <div class="section">
+                    <h2>Resultado de la predicción</h2>
+                    {"<div class='alert ataque'>⚠️ Ataque detectado</div>" if es_ataque else "<div class='alert normal'>✅ Tráfico normal</div>"}
+                </div>
+
+                <div class="section">
+                    <h2>Explicación generada por LIME</h2>
+                    <p>A continuación se muestra una explicación local del modelo sobre la instancia seleccionada, indicando qué características han influido más en la predicción.</p>
+                    <div class="lime-output">
+                        {lime_html}
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                Explicabilidad generada con LIME | Proyecto Rafael Sánchez Navarro
+            </div>
+        </body>
+        </html>
+        """
+
+
+
+        with open(path_html, "w", encoding="utf-8") as f:
+            f.write(html_final)
+
+        print(f"✅ HTML LIME estilizado guardado en: {path_html}")
 
     elif tipo == "shap":
         # Guardar la imagen de SHAP en la misma carpeta
@@ -50,95 +219,79 @@ def guardar_exp(pre_path, exp, tipo):
         print(f"✅ Gráfico SHAP guardado en: {path_shap}")
 
 def metodo_lime(model_test, X_train, X_test, instancia):
-    # Crear el explicador
-    explainer = LimeTabularExplainer(X_train.values, 
-                                    feature_names=X_train.columns.tolist(), 
-                                    class_names=['Normal', 'Ataque'], 
-                                    mode='classification',
-                                    random_state=42)
+    """
+    Explicación LIME para clasificación multiclase real (incluye tipos específicos de ataque).
+    """
+    # Obtener nombres de clases directamente desde el modelo
+    class_names = list(model_test.classes_)
 
-    # Seleccionar una muestra de prueba
-    exp = explainer.explain_instance(
-        X_test.iloc[instancia].values, 
-        lambda x: model_test.predict_proba(pd.DataFrame(x, columns=X_train.columns))
+    explainer = LimeTabularExplainer(
+        training_data=X_train.values,
+        feature_names=X_train.columns.tolist(),
+        class_names=class_names,
+        mode='classification',
+        random_state=42
     )
-    
+
+    # Usar directamente predict_proba del modelo sin convertir a binaria
+    exp = explainer.explain_instance(
+        data_row=X_test.iloc[instancia].values,
+        predict_fn=lambda x: model_test.predict_proba(pd.DataFrame(x, columns=X_train.columns)),
+        top_labels=1,
+        num_features=34,
+    )
+
     return exp
 
-def metodo_shape(model_test, X_test, instancia):
-    
+def metodo_shap(model_test, X_test, instancia=None):
+    """
+    Genera una visualización SHAP para una instancia específica (waterfall) o resumen general (summary_plot).
+    """
+    explainer = shap.TreeExplainer(model_test)
+    shap_values = explainer.shap_values(X_test)
+
+    # Si es multiclase, shap_values será una lista (una por clase)
+    multiclase = isinstance(shap_values, list)
+
+    # Crear buffer de imagen en memoria
+    img_buffer = io.BytesIO()
+
     if instancia is not None:
-        # Crear el explicador específico para árboles de decisión
-        explainer = shap.TreeExplainer(model_test)
-        shap_values = explainer.shap_values(X_test)
-
-        # Verificar estructura de shap_values
-        # print(f"Tipo de shap_values: {type(shap_values)}")
-        # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
-        # print(f"Forma de X_test: {X_test.shape}")
-
-        # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
-        if len(shap_values.shape) == 3:
-            shap_values = shap_values[:, :, 1]  # ✅ Tomar solo los valores de la clase 1 (Ataque)
-
-        # Crear un objeto en memoria para almacenar la imagen
-        img_buffer = io.BytesIO()
-
-        # Crear figura sin mostrarla
-        plt.figure(figsize=(10, 6))
-        shap.summary_plot(shap_values, X_test, feature_names=X_test.columns.tolist(), show=False)
-        
-        # Guardar imagen en memoria en formato PNG
-        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
-        plt.close()  # Cerrar la figura sin mostrarla
-
-        # Posicionar el puntero al inicio del buffer para lectura
-        img_buffer.seek(0)
-
-        print("✅ Gráfico SHAP generado y guardado en memoria.")
-
-        return img_buffer  # Devolver la imagen en un objeto BytesIO
-    
-    else:
-        # Crear el explicador específico para árboles de decisión
-        explainer = shap.TreeExplainer(model_test)
-        shap_values = explainer.shap_values(X_test)
-
-        # Verificar estructura de shap_values
-        # print(f"Tipo de shap_values: {type(shap_values)}")
-        # print(f"Forma de shap_values: {shap_values.shape if hasattr(shap_values, 'shape') else 'No tiene shape'}")
-        # print(f"Forma de X_val: {X_val.shape}")
-
-        # Seleccionar una sola instancia
+        # ✅ Explicación individual - waterfall plot
         X_instance = X_test.iloc[[instancia]]
-    
-        # Si shap_values tiene 3 dimensiones (ej: (123125, 34, 2)), seleccionar la clase 1 (Ataque)
-        if len(shap_values.shape) == 3:
-            shap_values = shap_values[:, :, 1]  # ✅ Tomar solo los valores de la clase 1 (Ataque)
+        clase_predicha = model_test.predict(X_instance)[0]
 
-        # Seleccionar solo los SHAP values de la instancia específica
-        shap_values_instance = shap_values[instancia]
-    
-        # Crear un objeto en memoria para almacenar la imagen
-        img_buffer = io.BytesIO()
+        # Obtener índice de la clase predicha
+        clases = model_test.classes_
+        class_index = list(clases).index(clase_predicha)
 
-        # Crear figura sin mostrarla
+        # Seleccionar los valores SHAP de esa clase
+        valores_instancia = shap_values[class_index][instancia] if multiclase else shap_values[instancia]
+
+        # Crear y guardar gráfico waterfall
         plt.figure(figsize=(10, 6))
-        shap.waterfall_plot(shap.Explanation(values=shap_values_instance, 
-                                         base_values=explainer.expected_value[1], 
-                                         data=X_instance.values[0], 
-                                         feature_names=X_instance.columns.tolist()))
-        
-        # Guardar imagen en memoria en formato PNG
-        plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
-        plt.close()  # Cerrar la figura sin mostrarla
+        shap.waterfall_plot(shap.Explanation(
+            values=valores_instancia,
+            base_values=explainer.expected_value[class_index] if multiclase else explainer.expected_value,
+            data=X_instance.values[0],
+            feature_names=X_instance.columns.tolist()
+        ))
+    else:
+        # ✅ Resumen general - summary plot
+        clase_default = 1 if multiclase else None
+        valores = shap_values[clase_default] if multiclase else shap_values
 
-        # Posicionar el puntero al inicio del buffer para lectura
-        img_buffer.seek(0)
+        # Crear y guardar gráfico summary
+        plt.figure(figsize=(10, 6))
+        shap.summary_plot(valores, X_test, feature_names=X_test.columns.tolist(), show=False)
 
-        print("✅ Gráfico SHAP generado y guardado en memoria.")
+    # Guardar la imagen
+    plt.savefig(img_buffer, format="png", bbox_inches="tight", dpi=300)
+    plt.close()
+    img_buffer.seek(0)
 
-        return img_buffer  # Devolver la imagen en un objeto BytesIO
+    print("✅ Gráfico SHAP generado y guardado en memoria.")
+    return img_buffer
 
 def main(model_test, path):  
     print("🚀 Iniciando explicabilidad...")
@@ -149,13 +302,16 @@ def main(model_test, path):
     # Asignar los DataFrames a variables individuales
     X_train = datos["X_train"]
     X_test = datos["X_test"]
+    y_test_class1 = datos["y_test_class1"]
 
+    instancia = 62793
     
-    exp = metodo_lime(model_test, X_train, X_test, 9)
+    print(y_test_class1.iloc[instancia])
+    exp = metodo_lime(model_test, X_train, X_test, instancia)
     # exp = metodo_shape(model_test, X_test, 1)
     
-    guardar_exp(path, exp, "lime")
-    
+    guardar_exp(path, exp, "lime", model_test=model_test, X_test=X_test, instancia=instancia)
+
     print("🎯 Proceso de explicabilidad finalizado.")
 
     

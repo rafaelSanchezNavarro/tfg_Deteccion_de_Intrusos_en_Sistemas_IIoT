@@ -54,21 +54,45 @@ for categoria, tipos in anomalias.items():
         tipo_a_categoria[tipo] = categoria
         
 # csv1 = pd.read_csv('predicciones/real.csv', header=None)
-# csv2 = pd.read_csv('predicciones/pruebas arquitecturas/arq1b.csv', header=None)
+# csv2 = pd.read_csv('predicciones/arq2.csv', header=None)
 # min_filas = min(len(csv1), len(csv2))
-# csv1, csv2 = csv1.iloc[:min_filas, 2], csv2.iloc[:min_filas, 2]
-# # csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
+# csv1, csv2 = csv1.iloc[:min_filas, 0], csv2.iloc[:min_filas, 0]
+# csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
 # # csv2 = csv2.map(lambda x: tipo_a_categoria.get(x, x))  # <- ahora sí
 # accuracy = accuracy_score(csv1, csv2)
 # print(f'📈 Accuracy (test): {accuracy:.4f}')
-# precision = precision_score(csv1, csv2, average='macro', zero_division=0)
+# precision = precision_score(csv1, csv2, average='binary', zero_division=0)
 # print(f'📈 Precision (test): {precision:.4f}')
-# recall = recall_score(csv1, csv2, average='macro')
+# recall = recall_score(csv1, csv2, average='binary')
 # print(f'📈 Recall (test): {recall:.4f}')
-# f1 = f1_score(csv1, csv2, average='macro')
+# f1 = f1_score(csv1, csv2, average='binary')
 # print(f'📈 F1 (test): {f1:.4f}')
 
 
+
+
+csv1 = pd.read_csv('predicciones/real.csv', header=None)
+csv2 = pd.read_csv('predicciones/pruebas arq2b/GRU.csv', header=None)
+min_filas = min(len(csv1), len(csv2))
+csv1, csv2 = csv1.iloc[:min_filas, 0], csv2.iloc[:min_filas, 0]
+csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
+# csv2 = csv2.map(lambda x: tipo_a_categoria.get(x, x))  # <- ahora sí
+accuracy = accuracy_score(csv1, csv2)
+print(f'📈 Accuracy (test): {accuracy:.4f}')
+precision = precision_score(csv1, csv2, average='binary', zero_division=0)
+print(f'📈 Precision (test): {precision:.4f}')
+recall = recall_score(csv1, csv2, average='binary')
+print(f'📈 Recall (test): {recall:.4f}')
+f1 = f1_score(csv1, csv2, average='binary')
+print(f'📈 F1 (test): {f1:.4f}')
+
+labels = sorted(set(csv1))
+label_names = [str(label) for label in labels]  
+cm = confusion_matrix(csv1, csv2)
+cm_df = pd.DataFrame(cm, index=[f'{label}' for label in label_names], columns=[f'{label}' for label in label_names])
+print(cm_df)
+class_df = classification_report(csv1, csv2, target_names=label_names, digits=4)
+print(class_df)
 
 
 csv1 = pd.read_csv('predicciones/real.csv', header=None)
@@ -93,6 +117,31 @@ cm_df = pd.DataFrame(cm, index=[f'{label}' for label in label_names], columns=[f
 print(cm_df)
 class_df = classification_report(csv1, csv2, target_names=label_names, digits=4)
 print(class_df)
+
+
+csv1 = pd.read_csv('predicciones/real.csv', header=None)
+csv2 = pd.read_csv('predicciones/pruebas arq2b/GRU.csv', header=None)
+min_filas = min(len(csv1), len(csv2))
+csv1, csv2 = csv1.iloc[:min_filas, 2], csv2.iloc[:min_filas, 0]
+# csv2 = csv2.apply(lambda x: 0 if x == 'Normal' else 1)
+# csv2 = csv2.map(lambda x: tipo_a_categoria.get(x, x))  # <- ahora sí
+accuracy = accuracy_score(csv1, csv2)
+print(f'📈 Accuracy (test): {accuracy:.4f}')
+precision = precision_score(csv1, csv2, average='macro', zero_division=0)
+print(f'📈 Precision (test): {precision:.4f}')
+recall = recall_score(csv1, csv2, average='macro')
+print(f'📈 Recall (test): {recall:.4f}')
+f1 = f1_score(csv1, csv2, average='macro')
+print(f'📈 F1 (test): {f1:.4f}')
+
+labels = sorted(set(csv1))
+label_names = [str(label) for label in labels]  
+cm = confusion_matrix(csv1, csv2)
+cm_df = pd.DataFrame(cm, index=[f'{label}' for label in label_names], columns=[f'{label}' for label in label_names])
+print(cm_df)
+class_df = classification_report(csv1, csv2, target_names=label_names, digits=4)
+print(class_df)
+
 
 
 ###################################################################

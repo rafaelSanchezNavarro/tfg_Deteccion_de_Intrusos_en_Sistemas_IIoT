@@ -64,6 +64,8 @@ def seleccionar_variables_pca(X_train, X_val, n_components, num_top_features):
     # Aplicar PCA (sin guardar la transformación)
     pca = PCA(n_components=n_components, random_state=42)
     pca.fit(X_train)  # Solo ajustamos el modelo, no transformamos los datos
+    
+    # print(f"Componentes retenidos: {pca.n_components_}")
 
     # Obtener nombres originales de las variables
     original_feature_names = np.array(X_train.columns)
