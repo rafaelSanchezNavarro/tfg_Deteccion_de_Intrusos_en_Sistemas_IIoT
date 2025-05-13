@@ -6,7 +6,7 @@ from lime.lime_tabular import LimeTabularExplainer
 import shap
 import matplotlib.pyplot as plt
 from scripts.anomalias import anomalias
-
+import datetime
 
 def cargar_datos():
     """Carga todos los archivos procesados y los devuelve como DataFrames."""
@@ -44,8 +44,7 @@ def cargar_datos():
     return datos
  
 def guardar_exp(pre_path, exp, tipo, model_test=None, X_test=None, instancia=None):
-    import datetime
-
+    
     # Definir la ruta base
     dir_path = os.path.join("modelos", pre_path)
     os.makedirs(dir_path, exist_ok=True)
@@ -210,6 +209,48 @@ def guardar_exp(pre_path, exp, tipo, model_test=None, X_test=None, instancia=Non
             f.write(html_final)
 
         print(f"✅ HTML LIME estilizado guardado en: {path_html}")
+        
+        
+
+        # Guardar gráfico estático de LIME como imagen con separación vertical y ancho reducido
+        label_explicado = exp.available_labels()[0]
+        labels, weights = zip(*exp.as_list(label=label_explicado))
+        print(labels)
+        print(weights)
+        
+        # Figura más estrecha (menos ancho) y más alta
+        plt.figure(figsize=(8, 8))  # ancho reducido de 10 a 6, altura aumentada
+
+        colors = ['#F8CECC' if w < 0 else '#D5E8D4' for w in weights]
+
+        bar_positions = range(len(labels))
+        bar_height = 0.8  # más separación vertical
+
+        plt.barh(
+            bar_positions,
+            weights,
+            color=colors,
+            edgecolor='grey',
+            height=bar_height
+        )
+
+        plt.yticks(bar_positions, labels, fontsize=10)
+        plt.xlabel("Importancia", fontsize=10)
+        plt.title("Explicación LIME", fontsize=10)
+        plt.xticks(fontsize=10)
+        plt.xlim(-0.0035, 0.0035)  # límite del eje X fijo
+        plt.gca().invert_yaxis()
+        plt.subplots_adjust(left=0.2)  # más espacio para etiquetas
+        plt.tight_layout(pad=2)
+
+        # Guardar imagen
+        path_img = os.path.join(dir_path, "lime_summary.png")
+        plt.savefig(path_img, dpi=300)
+        plt.close()
+
+        print(f"✅ Imagen LIME más estrecha guardada en: {path_img}")
+
+
 
     elif tipo == "shap":
         # Guardar la imagen de SHAP en la misma carpeta
@@ -238,7 +279,7 @@ def metodo_lime(model_test, X_train, X_test, instancia):
         data_row=X_test.iloc[instancia].values,
         predict_fn=lambda x: model_test.predict_proba(pd.DataFrame(x, columns=X_train.columns)),
         top_labels=1,
-        num_features=34,
+        num_features=17,
     )
 
     return exp
@@ -303,7 +344,11 @@ def main(model_test, path):
     X_train = datos["X_train"]
     X_test = datos["X_test"]
     y_test_class1 = datos["y_test_class1"]
+    
+    list = ['read_write_physical.process_scaled', 'Duration_scaled', 'total_bytes_scaled', 'Avg_num_cswch/s_scaled', 'Service_dns', 'Avg_system_time_scaled', 'paket_rate_scaled', 'is_with_payload_scaled', 'Avg_user_time_scaled', 'Avg_ideal_time_scaled', 'total_packet_scaled', 'Service_other', 'Service_mqtt', 'Service_coap', 'std_num_cswch/s_scaled', 'is_syn_only_scaled', 'Protocol_udp', 'Conn_state_scaled', 'Avg_nice_time_scaled', 'Login_attempt_scaled']
 
+    X_test = X_test[list]
+    
     instancia = 62793
     
     print(y_test_class1.iloc[instancia])

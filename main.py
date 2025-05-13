@@ -7,7 +7,7 @@ from scripts.preprocesamiento import preprocesamiento
 from scripts.preprocesamiento.preprocesamiento_utils import discretizers, scalers, imputers, encoders
 from scripts.preprocesamiento.reduccion_dimensionalidad import seleccionar_variables_pca, seleccionar_variables_randomForest, seleccionar_variables_rfe, proyectar_tsne
 
-from scripts.entrenamiento import entrenamientoNoSupervisado, entrenamientoSupervisado_opcion1, entrenamientoSupervisado_opcion2, entrenamientoSupervisado_opcion3
+from scripts.entrenamiento import entrenamientoSupervisado_opcion1, entrenamientoSupervisado_opcion2, entrenamientoSupervisado_opcion3
 from scripts.entrenamiento.entrenamiento_utils.validacion import validation_methods
 from modelos.diccionario_modelos import algorithms
 
